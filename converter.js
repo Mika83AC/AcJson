@@ -87,10 +87,6 @@ function processFile(fileContent) {
 
 		// Families
 		if(line.startsWith("0") && line.endsWith("FAM")) {
-			if(family !== undefined) {
-				families.push(family);
-			}
-
 			family = {};
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
@@ -111,10 +107,14 @@ function processFile(fileContent) {
 			children.push(child);
 		}
 		if(lastCommandSection === "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 DATE")) {
-			event = newEvent(3, individual.id, 0);
+			event = newEvent(3, 0, family.id);
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
+			if(event === {} || event.eventType !== 3 || event.familyId !== family.id) {
+				event = newEvent(3, 0, family.id);
+			}
+
 			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
 		}
