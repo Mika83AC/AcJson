@@ -3,6 +3,39 @@
 var nextEventId = 1;
 var nextChildId = 1;
 
+var Individual = function() {
+   this.id = 0;
+	this.preNames = "";
+	this.lastNames_Birth = "";
+	this.lastNames_Mariage = "";
+	this.sexId = 1;
+	this.memo = "";
+	this.familySearchOrgId = "";
+}
+var Family = function() {
+   this.id = 0;
+	this.husbandId = 0;
+	this.wifeId = 0;
+	this.memo = "";
+	this.familySearchOrgId = "";
+}
+var Child = function() {
+   this.id = 0;
+	this.individualId = 0;
+	this.familyId = 0;
+	this.memo = "";
+}
+var Event = function() {
+   this.id = 0;
+	this.eventTypeId = 0;
+	this.individualId = 0;
+	this.familyId = 0;
+	this.date = "";
+	this.place = "";
+	this.memo = "";
+}
+
+
 function gedcomToJSON(evt) {
 	var file = evt.target.files[0]; 
 
@@ -38,14 +71,14 @@ function processFile(fileContent) {
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
-			individual = {};
+			individual = new Individual();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
 			lastCommandSection = "INDI";
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 NAME")) {
 			individual.preNames = line.substring(("1 NAME").length + 1, line.indexOf("/") - 1);
-			individual.lastName_birth = line.substring(line.indexOf("/") + 1).replace("/", "");
+			individual.lastNames_Birth = line.substring(line.indexOf("/") + 1).replace("/", "");
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 SEX")) {
 			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
@@ -87,7 +120,7 @@ function processFile(fileContent) {
 
 		// Families
 		if(line.startsWith("0") && line.endsWith("FAM")) {
-			family = {};
+			family = new Family();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
@@ -99,7 +132,7 @@ function processFile(fileContent) {
 			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			child = {};
+			child = new Child();
 			child.id = nextChildId++;
 			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "");
 			child.familyId = family.id;
@@ -143,10 +176,11 @@ function makeFile(text) {
   	a.href = URL.createObjectURL(data);
   	a.innerHTML = "Download AcJSON file here";
 };
+
 function newEvent(eventType, individualId, familyId) {
-	var event = {};
+	var event = new Event();
 	event.id = nextEventId++;
-	event.eventType = eventType;
+	event.eventTypeId = eventType;
 	event.individualId = individualId;
 	event.familyId = familyId;
 	return event;
