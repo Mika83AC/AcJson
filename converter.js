@@ -1,5 +1,8 @@
 "use strict";
 
+var nextEventId = 1;
+var nextChildId = 1;
+
 function gedcomToJSON(evt) {
 	var file = evt.target.files[0]; 
 
@@ -24,9 +27,6 @@ function processFile(fileContent) {
 	var events = [];
 	var children = [];
 
-	var nextEventId = 1;
-	var nextChildId = 1;
-
 	var individual = undefined;
 	var family = undefined;
 	var event = undefined;
@@ -34,57 +34,44 @@ function processFile(fileContent) {
 
 	for(var row = 0; row < lines.length; row++){
 		var line = lines[row];
-
-		if(line.includes("I47@")) {
-			var x = 0;
-		}
+		line = line.replace("\r", "");
 
 		// Individual
-		if(line.startsWith("0") && line.endsWith("INDI\r")) {
+		if(line.startsWith("0") && line.endsWith("INDI")) {
 			individual = {};
-			individual.id = line.substring(3).replace(" INDI", "").replace("\r", "");
+			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
 			lastCommandSection = "INDI";
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 NAME")) {
 			individual.preNames = line.substring(("1 NAME").length + 1, line.indexOf("/") - 1);
-			individual.lastName_birth = line.substring(line.indexOf("/") + 1).replace("/", "").replace("\r", "");
+			individual.lastName_birth = line.substring(line.indexOf("/") + 1).replace("/", "");
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 SEX")) {
 			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 DATE")) {
-			if(event !== undefined) {
-				event === undefined;
-			}
-
-			event = {};
-			event.id = nextEventId++;
-			event.eventType = 1; // Birth
-			event.individualId = individual.id;
-			event.familyId = 0;
-			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
+			event = newEvent(1, individual.id, 0);
+			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
+			if(event === {} || event.eventType !== 1 || event.individualId !== individual.id) {
+				event = newEvent(1, individual.id, 0);
+			}
 
+			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 DATE")) {
-			if(event !== undefined) {
-				event === undefined;
-			}
-
-			event = {};
-			event.id = nextEventId++;
-			event.eventType = 5; // Death
-			event.individualId = individual.id;
-			event.familyId = 0;
-			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
+			event = newEvent(5, individual.id, 0);
+			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
+			if(event === {} || event.eventType !== 5 || event.individualId !== individual.id) {
+				event = newEvent(5, individual.id, 0);
+			}
 
+			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 FAMS")) {
@@ -94,60 +81,45 @@ function processFile(fileContent) {
 			// ist Kind von Familie x
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 _FSFTID")) {
-			individual.familySearchOrgId = line.substring(("1 _FSFTID").length + 1).replace("\r", "");
-
+			individual.familySearchOrgId = line.substring(("1 _FSFTID").length + 1);
 			individuals.push(individual);
 		}
 
 		// Families
-		if(line.startsWith("0") && line.endsWith("FAM\r")) {
+		if(line.startsWith("0") && line.endsWith("FAM")) {
 			if(family !== undefined) {
 				families.push(family);
 			}
 
 			family = {};
-			family.id = line.substring(3).replace(" FAM", "").replace("\r", "");
+			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 HUSB")) {
-			family.husbandId = line.substring(("1 HUSB").length + 1).replace("\r", "");
+			family.husbandId = line.substring(("1 HUSB").length + 1).replace("@", "");
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 WIFE")) {
-			family.wifeId = line.substring(("1 WIFE").length + 1).replace("\r", "");
+			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			if(child !== undefined) {
-				child === undefined;
-			}
-
 			child = {};
 			child.id = nextChildId++;
-			child.individualId = line.substring(("1 CHIL").length + 1).replace("\r", "");
+			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "");
 			child.familyId = family.id;
 
 			children.push(child);
 		}
 		if(lastCommandSection === "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 DATE")) {
-			if(event !== undefined) {
-				event === undefined;
-			}
-
-			event = {};
-			event.id = nextEventId++;
-			event.eventType = 3; // Marriage
-			event.individualId = 0;
-			event.familyId = family.id;
-			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
+			event = newEvent(3, individual.id, 0);
+			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
-
+			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 _FSFTID")) {
-			family.familySearchOrgId = line.substring(("1 _FSFTID").length + 1).replace("\r", "");
-
+			family.familySearchOrgId = line.substring(("1 _FSFTID").length + 1);
 			families.push(family);
 		}
 
@@ -171,5 +143,13 @@ function makeFile(text) {
   	a.href = URL.createObjectURL(data);
   	a.innerHTML = "Download AcJSON file here";
 };
+function newEvent(eventType, individualId, familyId) {
+	var event = {};
+	event.id = nextEventId++;
+	event.eventType = eventType;
+	event.individualId = individualId;
+	event.familyId = familyId;
+	return event;
+}
 
 window.document.getElementById('fileinput').addEventListener('change', gedcomToJSON, false);
