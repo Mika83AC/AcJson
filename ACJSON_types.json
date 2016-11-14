@@ -1,0 +1,40 @@
+[{
+	"sexes": [{
+		"id": 1,
+		"name": "male"
+	}, {
+		"id": 2,
+		"name": "female"
+	}]
+}, {
+	"eventTypes": [{
+		"id": 1,
+		"name": "birth"
+	}, {
+		"id": 2,
+		"name": "baptism"
+	}, {
+		"id": 3,
+		"name": "mariage"
+	}, {
+		"id": 4,
+		"name": "divorce"
+	}, {
+		"id": 5,
+		"name": "death"
+	}]
+}, {
+	"mediaTypes": [{
+		"id": 1,
+		"name": "picture"
+	}, {
+		"id": 2,
+		"name": "movie"
+	}, {
+		"id": 3,
+		"name": "audio"
+	}, {
+		"id": 4,
+		"name": "document"
+	}]
+}]
