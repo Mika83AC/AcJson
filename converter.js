@@ -35,7 +35,6 @@ var Event = function() {
 	this.memo = "";
 }
 
-
 function gedcomToJSON(evt) {
 	var file = evt.target.files[0]; 
 
@@ -55,19 +54,17 @@ function processFile(fileContent) {
 	var lastCommandSection = "";
 	var lastCommandLine = "";
 
-	var individuals = [];
-	var families = [];
-	var events = [];
-	var children = [];
-
-	var individual = undefined;
-	var family = undefined;
-	var event = undefined;
-	var child = undefined;
+	var individuals = [], families = [], events = [], children = [];
+	var individual = undefined, family = undefined, event = undefined, child = undefined;
+	var gedcomMarkerFound = false;
 
 	for(var row = 0; row < lines.length; row++){
 		var line = lines[row];
 		line = line.replace("\r", "");
+
+		if(line.startsWith("1 GEDC")) {
+			gedcomMarkerFound = true;
+		}
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
@@ -162,6 +159,10 @@ function processFile(fileContent) {
 		}
 	}
 
+	if(!gedcomMarkerFound) {
+		alert('In the choosen file, there are no GEDCOM header informations present.\rIt is very likely that the file can\'t be processed correctly!');
+	}
+
 	var obj = {};
 	obj.individuals = individuals;
 	obj.families = families;
@@ -173,8 +174,16 @@ function processFile(fileContent) {
 function makeFile(text) {
 	var a = document.getElementById("downloadlink");
   	var data = new Blob([text], {type: 'text/plain'});
+
   	a.href = URL.createObjectURL(data);
   	a.innerHTML = "Download AcJSON file here";
+};
+function resetControls() {
+	var a = document.getElementById("downloadlink");
+	var inp = document.getElementById('fileinput');
+
+	inp.value = "";
+  	a.innerHTML = "";
 };
 
 function newEvent(eventType, individualId, familyId) {
@@ -184,6 +193,7 @@ function newEvent(eventType, individualId, familyId) {
 	event.individualId = individualId;
 	event.familyId = familyId;
 	return event;
-}
+};
 
 window.document.getElementById('fileinput').addEventListener('change', gedcomToJSON, false);
+window.document.getElementById('downloadlink').addEventListener('click', resetControls, false);
