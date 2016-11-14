@@ -63,7 +63,7 @@ function processFile(fileContent) {
 			event.eventType = 1; // Birth
 			event.individualId = individual.id;
 			event.familyId = 0;
-			event.date = line.substring(("2 DATE").length + 1);
+			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
 			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
@@ -80,7 +80,7 @@ function processFile(fileContent) {
 			event.eventType = 5; // Death
 			event.individualId = individual.id;
 			event.familyId = 0;
-			event.date = line.substring(("2 DATE").length + 1);
+			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
 			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
@@ -111,10 +111,10 @@ function processFile(fileContent) {
 			lastCommandSection = "FAM";
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 HUSB")) {
-			family.husbandId = line.substring(("1 HUSB").length + 1);
+			family.husbandId = line.substring(("1 HUSB").length + 1).replace("\r", "");
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 WIFE")) {
-			family.wifeId = line.substring(("1 WIFE").length + 1);
+			family.wifeId = line.substring(("1 WIFE").length + 1).replace("\r", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
 			if(child !== undefined) {
@@ -123,7 +123,7 @@ function processFile(fileContent) {
 
 			child = {};
 			child.id = nextChildId++;
-			child.individualId = line.substring(("1 CHIL").length + 1);
+			child.individualId = line.substring(("1 CHIL").length + 1).replace("\r", "");
 			child.familyId = family.id;
 
 			children.push(child);
@@ -138,10 +138,10 @@ function processFile(fileContent) {
 			event.eventType = 3; // Marriage
 			event.individualId = 0;
 			event.familyId = family.id;
-			event.date = line.substring(("2 DATE").length + 1);
+			event.date = line.substring(("2 DATE").length + 1).replace("\r", "");
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1);
+			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
 
 			events.push(event);
 		}
