@@ -169,6 +169,7 @@ function makeFile(text) {
 	var a = document.getElementById("downloadlink");
   	var data = new Blob([text], {type: 'text/plain'});
   	a.href = URL.createObjectURL(data);
+  	a.innerHTML = "Download AcJSON file here";
 };
 
 window.document.getElementById('fileinput').addEventListener('change', gedcomToJSON, false);
