@@ -1,44 +1,44 @@
 [{
 	"individuals": [{
-		"id": 1,
-		"preNames": "Hans Ulrich",
-		"lastNames_Birth": "Tester",
-		"lastNames_Mariage": "Tester",
+		"id": 0,
+		"preNames": "",
+		"lastNames_Birth": "",
+		"lastNames_Mariage": "",
 		"sexId": 1,
 		"memo": "",
 		"familySearchOrgId": ""
 	}]
 }, {
 	"families": [{
-		"id": 3,
-		"husbandId": 1,
-		"wifeId": 4,
+		"id": 0,
+		"husbandId": 0,
+		"wifeId": 0,
 		"memo": "",
 		"familySearchOrgId": ""
 	}]
 }, {
 	"children": [{
-		"id": 56,
-		"individualId": 2,
-		"familyId": 1,
+		"id": 0,
+		"individualId": 0,
+		"familyId": 0,
 		"memo": ""
 	}]
 }, {
 	"events": [{
-		"id": 85,
+		"id": 0,
 		"eventTypeId": 0,
-		"individualId": -1,
-		"familyId": -1,
+		"individualId": 0,
+		"familyId": 0,
 		"date": "",
 		"place": "Aachen, NRW, Deutschland",
 		"memo": ""
 	}]
 }, {
 	"media": [{
-		"id": 99,
+		"id": 0,
 		"mediaTypeId": 0,
-		"individualId": -1,
-		"familyId": -1,
+		"individualId": 0,
+		"familyId": 0,
 		"path": "",
 		"memo": ""
 	}]
