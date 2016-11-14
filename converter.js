@@ -1,12 +1,13 @@
 "use strict";
 
-function readFile(evt) {
+function gedcomToJSON(evt) {
 	var file = evt.target.files[0]; 
 
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
-			processFile(e.target.result);
+			var jsonContent = processFile(e.target.result);
+			makeFile(jsonContent);
 		}
 		r.readAsText(file);
 	} else { 
@@ -34,16 +35,20 @@ function processFile(fileContent) {
 	for(var row = 0; row < lines.length; row++){
 		var line = lines[row];
 
+		if(line.includes("I47@")) {
+			var x = 0;
+		}
+
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI\r")) {
 			individual = {};
-			individual.id = line.substring(3).replace(" INDI", "");
+			individual.id = line.substring(3).replace(" INDI", "").replace("\r", "");
 
 			lastCommandSection = "INDI";
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 NAME")) {
 			individual.preNames = line.substring(("1 NAME").length + 1, line.indexOf("/") - 1);
-			individual.lastName_birth = line.substring(line.indexOf("/") + 1).replace("/", "");
+			individual.lastName_birth = line.substring(line.indexOf("/") + 1).replace("/", "").replace("\r", "");
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 SEX")) {
 			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
@@ -61,7 +66,7 @@ function processFile(fileContent) {
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1);
+			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
 
 			events.push(event);
 		}
@@ -78,7 +83,7 @@ function processFile(fileContent) {
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
-			event.place = line.substring(("2 PLAC").length + 1);
+			event.place = line.substring(("2 PLAC").length + 1).replace("\r", "");
 
 			events.push(event);
 		}
@@ -89,7 +94,7 @@ function processFile(fileContent) {
 			// ist Kind von Familie x
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 _FSFTID")) {
-			individual.familySearchOrgId = line.substring(("1 _FSFTID").length + 1);
+			individual.familySearchOrgId = line.substring(("1 _FSFTID").length + 1).replace("\r", "");
 
 			individuals.push(individual);
 		}
@@ -101,7 +106,7 @@ function processFile(fileContent) {
 			}
 
 			family = {};
-			family.id = line.substring(3).replace(" FAM", "");
+			family.id = line.substring(3).replace(" FAM", "").replace("\r", "");
 
 			lastCommandSection = "FAM";
 		}
@@ -141,7 +146,7 @@ function processFile(fileContent) {
 			events.push(event);
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 _FSFTID")) {
-			family.familySearchOrgId = line.substring(("1 _FSFTID").length + 1);
+			family.familySearchOrgId = line.substring(("1 _FSFTID").length + 1).replace("\r", "");
 
 			families.push(family);
 		}
@@ -152,16 +157,18 @@ function processFile(fileContent) {
 		}
 	}
 
-	var i = 0;
+	var obj = {};
+	obj.individuals = individuals;
+	obj.families = families;
+	obj.children = children;
+	obj.events = events;
+
+	return JSON.stringify(obj);
 };
 function makeFile(text) {
-	var data = new Blob([text], {type: 'text/plain'});
-
-	if (textFile !== null) {
-		window.URL.revokeObjectURL(textFile);
-	}
-
-	return window.URL.createObjectURL(data);
+	var a = document.getElementById("downloadlink");
+  	var data = new Blob([text], {type: 'text/plain'});
+  	a.href = URL.createObjectURL(data);
 };
 
-window.document.getElementById('fileinput').addEventListener('change', readFile, false);
+window.document.getElementById('fileinput').addEventListener('change', gedcomToJSON, false);
