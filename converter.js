@@ -123,15 +123,15 @@ function processFile(fileContent) {
 			lastCommandSection = "FAM";
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 HUSB")) {
-			family.husbandId = line.substring(("1 HUSB").length + 1).replace("@", "");
+			family.husbandId = line.substring(("1 HUSB").length + 1).replace("@", "").replace("@", "");
 		}
 		if(lastCommandSection === "FAM" && line.startsWith("1 WIFE")) {
-			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "");
+			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "").replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
 			child = new Child();
 			child.id = nextChildId++;
-			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "");
+			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "").replace("@", "");
 			child.familyId = family.id;
 
 			children.push(child);
