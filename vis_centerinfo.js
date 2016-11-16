@@ -3,14 +3,12 @@
 var dataSource = {};
 
 // Dimensions of sunburst.
-var width = 750;
-var height = 600;
+var width = 1300;
+var height = 750;
 var radius = Math.min(width, height) / 2;
 
 // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
-var b = {
-  w: 75, h: 30, s: 3, t: 10
-};
+var b = { w: 140, h: 30, s: 3, t: 10 };
 
 // Total size of all segments; we set this later, after loading the data.
 var totalSize = 0; 
@@ -33,12 +31,12 @@ var arc = d3.svg.arc()
 // Main function to draw and set up the visualization, once we have the data.
 function createVisualization(json) {
 
-  // Basic setup of page elements.
-  initializeBreadcrumbTrail();
+	// Basic setup of page elements.
+	initializeBreadcrumbTrail();
 
-  // Bounding circle underneath the sunburst, to make it easier to detect
-  // when the mouse leaves the parent g.
-  vis.append("svg:circle")
+	// Bounding circle underneath the sunburst, to make it easier to detect
+  	// when the mouse leaves the parent g.
+  	vis.append("svg:circle")
 	  .attr("r", radius)
 	  .style("opacity", 0);
 
@@ -67,12 +65,12 @@ function createVisualization(json) {
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
-  d3.select("#percentage").text(d.name);
+  d3.select("#percentage").text(d.data.preNames + ' ' + d.data.lastNames_Birth);
 
   d3.select("#explanation").style("visibility", "");
 
   var sequenceArray = getAncestors(d);
-  updateBreadcrumbs(sequenceArray, d.name);
+  updateBreadcrumbs(sequenceArray);
 
   // Fade all the segments.
   d3.selectAll("path")
@@ -85,7 +83,6 @@ function mouseover(d) {
 			  })
 	  .style("opacity", 1);
 }
-
 // Restore everything to full opacity when moving off the visualization.
 function mouseleave(d) {
 
@@ -132,7 +129,6 @@ function initializeBreadcrumbTrail() {
 	.attr("id", "endlabel")
 	.style("fill", "#000");
 }
-
 // Generate a string that describes the points of a breadcrumb polygon.
 function breadcrumbPoints(d, i) {
   var points = [];
@@ -146,14 +142,13 @@ function breadcrumbPoints(d, i) {
   }
   return points.join(" ");
 }
-
 // Update the breadcrumb trail to show the current sequence and percentage.
-function updateBreadcrumbs(nodeArray, percentageString) {
+function updateBreadcrumbs(nodeArray) {
 
   // Data join; key function combines name and depth (= position in sequence).
   var g = d3.select("#trail")
 	  .selectAll("g")
-	  .data(nodeArray, function(d) { return d.name + d.depth; });
+	  .data(nodeArray, function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
 
   // Add breadcrumb and label for entering nodes.
   var entering = g.enter().append("svg:g");
@@ -167,7 +162,7 @@ function updateBreadcrumbs(nodeArray, percentageString) {
 	  .attr("y", b.h / 2)
 	  .attr("dy", "0.35em")
 	  .attr("text-anchor", "middle")
-	  .text(function(d) { return d.name; });
+	  .text(function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
 
   // Set position for entering and updating nodes.
   g.attr("transform", function(d, i) {
@@ -177,72 +172,20 @@ function updateBreadcrumbs(nodeArray, percentageString) {
   // Remove exiting nodes.
   g.exit().remove();
 
-  // Now move and update the percentage at the end.
-  d3.select("#trail").select("#endlabel")
-	  .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
-	  .attr("y", b.h / 2)
-	  .attr("dy", "0.35em")
-	  .attr("text-anchor", "middle")
-	  .text(percentageString);
-
   // Make the breadcrumb trail visible, if it's hidden.
-  d3.select("#trail")
-	  .style("visibility", "");
+  d3.select("#trail").style("visibility", "");
 }
-// Take a 2-column CSV and transform it into a hierarchical structure suitable
-// for a partition layout. The first column is a sequence of step names, from
-// root to leaf, separated by hyphens. The second column is a count of how 
-// often that sequence occurred.
-function buildHierarchy(csv) {
-  var root = {"name": "root", "children": []};
-  for (var i = 0; i < csv.length; i++) {
-	var sequence = csv[i][0];
-	var size = +csv[i][1];
-	if (isNaN(size)) { // e.g. if this is a header row
-	  continue;
-	}
-	var parts = sequence.split("-");
-	var currentNode = root;
-	for (var j = 0; j < parts.length; j++) {
-	  var children = currentNode["children"];
-	  var nodeName = parts[j];
-	  var childNode;
-	  if (j + 1 < parts.length) {
-   // Not yet at the end of the sequence; move down the tree.
-	var foundChild = false;
-	for (var k = 0; k < children.length; k++) {
-	  if (children[k]["name"] == nodeName) {
-		childNode = children[k];
-		foundChild = true;
-		break;
-	  }
-	}
-  // If we don't already have a child node for this branch, create it.
-	if (!foundChild) {
-	  childNode = {"name": nodeName, "children": []};
-	  children.push(childNode);
-	}
-	currentNode = childNode;
-	  } else {
-	// Reached the end of the sequence; create a leaf node.
-	childNode = {"name": nodeName, "size": size};
-	children.push(childNode);
-	  }
-	}
-  }
-  return root;
-};
 
 ////////////////////
 
 function pad(value, length) {
-   return (value.toString().length < length) ? pad("0"+value, length):value;
+	return (value.toString().length < length) ? pad("0"+value, length):value;
 }
 
 function buildHierarchyArray() {
 	var indiv = getIndividual("I1");
-	var indivNode = {"name": "", "children": [], "size": 1000, "color": "#cccccc"};
-	indivNode.name = indiv.preNames + ' ' + indiv.lastNames_Birth;
+	var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
+	indivNode.data = indiv;
 
 	getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
 
@@ -264,8 +207,8 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 				var valToChange = parseInt(c.substring(3, 5)) + 10;
 				return c.substring(0, 3) + pad(valToChange, 2) + c.substring(5, 7); 
 			})(parentColor);
-			var newNode = {"name": "", "children": [], "size": size, "color": color}
-			newNode.name = mother.preNames + ' ' + mother.lastNames_Birth;
+			var newNode = {"data": {}, "children": [], "size": size, "color": color}
+			newNode.data = mother;
 			getChildNodes(mother, newNode, size / 2, false, color);
 			indivNode.children.push(newNode);
 		}
@@ -274,8 +217,8 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 				var valToChange = parseInt(c.substring(5, 7)) + 10;
 				return c.substring(0, 5) + pad(valToChange, 2); 
 			})(parentColor);
-			var newNode = {"name": "", "children": [], "size": size, "color": color}
-			newNode.name = father.preNames + ' ' + father.lastNames_Birth;
+			var newNode = {"data": {}, "children": [], "size": size, "color": color}
+			newNode.data = father;
 			getChildNodes(father, newNode, size / 2, false, color);
 			indivNode.children.push(newNode);
 		}
