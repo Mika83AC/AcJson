@@ -13,18 +13,9 @@ body {
   width: 750px;
 }
 
-#sidebar {
-  float: right;
-  width: 100px;
-}
-
 #sequence {
   width: 600px;
   height: 70px;
-}
-
-#legend {
-  padding: 10px 0 0 3px;
 }
 
 #sequence text, #legend text {
