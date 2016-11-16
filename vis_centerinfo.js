@@ -1,11 +1,12 @@
 "use strict";
 
 var dataSource = {};
+var hierarchyArray = {};
 
 // Dimensions of sunburst.
 var width = 1300;
 var height = 750;
-var radius = Math.min(width, height) / 2;
+var radius = Math.min(width, height) / 1.8;
 
 // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
 var b = { w: 140, h: 30, s: 3, t: 10 };
@@ -35,8 +36,8 @@ function createVisualization(json) {
 	initializeBreadcrumbTrail();
 
 	// Bounding circle underneath the sunburst, to make it easier to detect
-  	// when the mouse leaves the parent g.
-  	vis.append("svg:circle")
+	// when the mouse leaves the parent g.
+	vis.append("svg:circle")
 	  .attr("r", radius)
 	  .style("opacity", 0);
 
@@ -59,22 +60,24 @@ function createVisualization(json) {
   // Add the mouseleave handler to the bounding circle.
   d3.select("#container").on("mouseleave", mouseleave);
 
-  // Get total size of the tree = value of root node from partition.
-  totalSize = path.node().__data__.value;
+  	// Initial view of root data
+  d3.select("#percentage").text(json.data.preNames + ' ' + json.data.lastNames_Birth);
+
+	// Get total size of the tree = value of root node from partition.
+  	totalSize = path.node().__data__.value;
  };
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
   d3.select("#percentage").text(d.data.preNames + ' ' + d.data.lastNames_Birth);
 
-  d3.select("#explanation").style("visibility", "");
+  //d3.select("#explanation").style("visibility", "");
 
   var sequenceArray = getAncestors(d);
   updateBreadcrumbs(sequenceArray);
 
   // Fade all the segments.
-  d3.selectAll("path")
-	  .style("opacity", 0.3);
+  d3.selectAll("path").style("opacity", 0.3);
 
   // Then highlight only those that are an ancestor of the current segment.
   vis.selectAll("path")
@@ -87,8 +90,7 @@ function mouseover(d) {
 function mouseleave(d) {
 
   // Hide the breadcrumb trail
-  d3.select("#trail")
-	  .style("visibility", "hidden");
+  d3.select("#trail").style("visibility", "hidden");
 
   // Deactivate all segments during transition.
   d3.selectAll("path").on("mouseover", null);
@@ -102,8 +104,10 @@ function mouseleave(d) {
 			  d3.select(this).on("mouseover", mouseover);
 			});
 
-  d3.select("#explanation")
-	  .style("visibility", "hidden");
+  //d3.select("#explanation").style("visibility", "hidden");
+
+  // Revert view of root data
+  d3.select("#percentage").text(hierarchyArray.data.preNames + ' ' + hierarchyArray.data.lastNames_Birth);
 }
 
 // Given a node in a partition layout, return an array of all of its ancestor
@@ -144,36 +148,34 @@ function breadcrumbPoints(d, i) {
 }
 // Update the breadcrumb trail to show the current sequence and percentage.
 function updateBreadcrumbs(nodeArray) {
+  	var g = d3.select("#trail")
+	  	.selectAll("g")
+	  	.data(nodeArray, function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
 
-  // Data join; key function combines name and depth (= position in sequence).
-  var g = d3.select("#trail")
-	  .selectAll("g")
-	  .data(nodeArray, function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
+  	// Add breadcrumb and label for entering nodes.
+  	var entering = g.enter().append("svg:g");
 
-  // Add breadcrumb and label for entering nodes.
-  var entering = g.enter().append("svg:g");
+  	entering.append("svg:polygon")
+	  	.attr("points", breadcrumbPoints)
+	  	.style("fill", function(d) { return d.color; });
 
-  entering.append("svg:polygon")
-	  .attr("points", breadcrumbPoints)
-	  .style("fill", function(d) { return d.color; });
+  	entering.append("svg:text")
+	  	.attr("x", (b.w + b.t) / 2)
+	  	.attr("y", b.h / 2)
+	  	.attr("dy", "0.35em")
+	  	.attr("text-anchor", "middle")
+	  	.text(function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
 
-  entering.append("svg:text")
-	  .attr("x", (b.w + b.t) / 2)
-	  .attr("y", b.h / 2)
-	  .attr("dy", "0.35em")
-	  .attr("text-anchor", "middle")
-	  .text(function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
+  	// Set position for entering and updating nodes.
+  	g.attr("transform", function(d, i) {
+		return "translate(" + i * (b.w + b.s) + ", 0)";
+  	});
 
-  // Set position for entering and updating nodes.
-  g.attr("transform", function(d, i) {
-	return "translate(" + i * (b.w + b.s) + ", 0)";
-  });
+  	// Remove exiting nodes.
+  	g.exit().remove();
 
-  // Remove exiting nodes.
-  g.exit().remove();
-
-  // Make the breadcrumb trail visible, if it's hidden.
-  d3.select("#trail").style("visibility", "");
+  	// Make the breadcrumb trail visible, if it's hidden.
+  	d3.select("#trail").style("visibility", "");
 }
 
 ////////////////////
@@ -181,6 +183,17 @@ function updateBreadcrumbs(nodeArray) {
 function pad(value, length) {
 	return (value.toString().length < length) ? pad("0"+value, length):value;
 }
+function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)};
+function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)};
+function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)};
+function cutHex(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h};
+function rgbToHex(R,G,B) {return toHex(R)+toHex(G)+toHex(B)};
+function toHex(n) {
+ 	n = parseInt(n,10);
+ 	if (isNaN(n)) return "00";
+ 	n = Math.max(0,Math.min(n,255));
+ 	return "0123456789ABCDEF".charAt((n-n%16)/16) + "0123456789ABCDEF".charAt(n%16);
+};
 
 function buildHierarchyArray() {
 	var indiv = getIndividual("I1");
@@ -204,8 +217,8 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 
 		if(mother !== undefined) {
 			var color = first ? "#490000" : (function(c) { 
-				var valToChange = parseInt(c.substring(3, 5)) + 10;
-				return c.substring(0, 3) + pad(valToChange, 2) + c.substring(5, 7); 
+				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
+				return rgbToHex(R, G + 30, B);
 			})(parentColor);
 			var newNode = {"data": {}, "children": [], "size": size, "color": color}
 			newNode.data = mother;
@@ -214,8 +227,8 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 		}
 		if(father !== undefined) {
 			var color = first ? "#004900" : (function(c) { 
-				var valToChange = parseInt(c.substring(5, 7)) + 10;
-				return c.substring(0, 5) + pad(valToChange, 2); 
+				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
+				return rgbToHex(R, G, B + 30);
 			})(parentColor);
 			var newNode = {"data": {}, "children": [], "size": size, "color": color}
 			newNode.data = father;
@@ -263,8 +276,7 @@ function startVis(evt) {
 		var r = new FileReader();
 		r.onload = function(e) { 
 			dataSource = JSON.parse(e.target.result);
-
-			var hierarchyArray = buildHierarchyArray();
+			hierarchyArray = buildHierarchyArray();
 
 			createVisualization(hierarchyArray);
 			initializeBreadcrumbTrail();
