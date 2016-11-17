@@ -2,7 +2,7 @@
 
 var dataSource = {};
 var hierarchyArray = {};
-var startIndividualId = 'I1';
+var startIndividualId = 'I6';
 
 // Dimensions of sunburst.
 var width = document.body.clientWidth;
@@ -15,12 +15,7 @@ var b = { w: 150, h: 30, s: 3, t: 10 };
 // Total size of all segments; we set this later, after loading the data.
 var totalSize = 0; 
 
-var vis = d3.select("#chart").append("svg:svg")
-	.attr("width", width)
-	.attr("height", height)
-	.append("svg:g")
-	.attr("id", "container")
-	.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+var vis = undefined;
 var partition = d3.layout.partition()
 	.size([2 * Math.PI, radius * radius])
 	.value(function(d) { return d.size; });
@@ -31,16 +26,6 @@ var arc = d3.svg.arc()
 	.outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
 
 function createVisualization(json) {
-
-	// Basic setup of page elements.
-	initializeBreadcrumbTrail();
-
-	// Bounding circle underneath the sunburst, to make it easier to detect
-	// when the mouse leaves the parent g.
-	vis.append("svg:circle")
-	  .attr("r", radius)
-	  .style("opacity", 0);
-
   	// For efficiency, filter nodes to keep only those large enough to see.
   	var nodes = partition.nodes(json)
 	  	.filter(function(d) {
@@ -100,7 +85,7 @@ function mouseleave(d) {
   	// Transition each segment to full opacity and then reactivate it.
   	d3.selectAll("path")
 	  	.transition()
-	  	.duration(1000)
+	  	.duration(500)
 	  	.style("opacity", 1)
 	  	.each("end", function() {
 			d3.select(this).on("mouseover", mouseover);
@@ -357,22 +342,40 @@ function getFamily(familyId) {
 	return undefined;
 };
 
-function startVis(evt) {
+function loadFile(evt) {
 	var file = evt.target.files[0]; 
 
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
 			dataSource = JSON.parse(e.target.result);
-			hierarchyArray = buildHierarchyArray(startIndividualId);
 
-			createVisualization(hierarchyArray);
-			setInitialData(hierarchyArray);
+			// Basic setup of page elements.
+			initializeBreadcrumbTrail();
+
+			startVis();
 		}
 		r.readAsText(file);
 	} else { 
 		alert("Failed to load file");
 	}
+};
+function startVis() {
+	hierarchyArray = buildHierarchyArray(startIndividualId);
+
+	vis = d3.select("#chart").append("svg:svg")
+		.attr("width", width)
+		.attr("height", height)
+		.append("svg:g")
+		.attr("id", "container")
+		.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+	// Bounding circle underneath the sunburst, to make it easier to detect
+	// when the mouse leaves the parent g.
+	vis.append("svg:circle").attr("r", radius).style("opacity", 0);
+
+	createVisualization(hierarchyArray);
+	setInitialData(hierarchyArray);
 };
 function findAndSetChildAsRoot(evt) {
 	var family = undefined;
@@ -383,6 +386,7 @@ function findAndSetChildAsRoot(evt) {
 	}
 
 	if(family === undefined) {
+		alert('Hat noch keine Familie gegründet.');
 		return;
 	}
 
@@ -395,11 +399,16 @@ function findAndSetChildAsRoot(evt) {
 
 	if(child !== undefined) {
 		startIndividualId = child.individualId;
+
+		var chart = document.getElementById("chart");
+		chart.removeChild(chart.lastChild);
+
+		startVis();
 	}
 	else {
 		alert('Kein Kind hinterlegt.');
 	}
 };
 
-window.document.getElementById('fileinput').addEventListener('change', startVis, false);
+window.document.getElementById('fileinput').addEventListener('change', loadFile, false);
 window.document.getElementById('uplink').addEventListener('click', findAndSetChildAsRoot, false);
