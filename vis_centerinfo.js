@@ -40,7 +40,8 @@ function createVisualization(json) {
 	  	.attr("fill-rule", "evenodd")
 	  	.style("fill", function(d) { return d.color; })
 	  	.style("opacity", 1)
-	  	.on("mouseover", mouseover);
+	  	.on("mouseover", mouseover)
+	  	.on("click", click);
 
   	// Add the mouseleave handler to the bounding circle.
   	d3.select("#container").on("mouseleave", mouseleave);
@@ -59,6 +60,10 @@ function setInitialData(json) {
   	setTextForCenterInfo(json, undefined, undefined);
 };
 
+function click(d) {
+	startIndividualId = d.data.id;
+	refreshVis();
+}
 function mouseover(d) {
 	setTextForCenterInfo(d, undefined, undefined);
 
@@ -377,6 +382,12 @@ function startVis() {
 	createVisualization(hierarchyArray);
 	setInitialData(hierarchyArray);
 };
+function refreshVis() {
+	var chart = document.getElementById("chart");
+	chart.removeChild(chart.lastChild);
+
+	startVis();
+}
 function findAndSetChildAsRoot(evt) {
 	var family = undefined;
 	for(var i = 0; i < dataSource.families.length; i++) {
@@ -399,11 +410,7 @@ function findAndSetChildAsRoot(evt) {
 
 	if(child !== undefined) {
 		startIndividualId = child.individualId;
-
-		var chart = document.getElementById("chart");
-		chart.removeChild(chart.lastChild);
-
-		startVis();
+		refreshVis();
 	}
 	else {
 		alert('Kein Kind hinterlegt.');
