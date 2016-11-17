@@ -5,11 +5,11 @@ var hierarchyArray = {};
 
 // Dimensions of sunburst.
 var width = document.body.clientWidth;
-var height = document.body.clientHeight - 100;
-var radius = Math.min(width, height) / 1.8;
+var height = document.body.clientHeight - 60;
+var radius = Math.min(width, height) / 2.0;
 
 // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
-var b = { w: 170, h: 30, s: 3, t: 10 };
+var b = { w: 150, h: 30, s: 3, t: 10 };
 
 // Total size of all segments; we set this later, after loading the data.
 var totalSize = 0; 
@@ -66,21 +66,17 @@ function createVisualization(json) {
 	exp.style.left = (width / 2 - 100) + 'px';
 	exp.style.top = (height / 2 - 100) + 'px';
 
-  	// Initial view of root data
-  	setTextForCenterInfo(json, undefined, undefined);
-  	//d3.select("#name").text(text);
-
 	// Get total size of the tree = value of root node from partition.
   	totalSize = path.node().__data__.value;
+};
+function setInitialData(json) {
+	// Initial view of root data
+  	setTextForCenterInfo(json, undefined, undefined);
 };
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
 	setTextForCenterInfo(d, undefined, undefined);
-  	//d3.select("#percentage").text(text);
-  	//document.getElementById("name").innerHTML = text;
-
-  	//d3.select("#explanation").style("visibility", "");
 
   	var sequenceArray = getAncestors(d);
   	updateBreadcrumbs(sequenceArray);
@@ -94,10 +90,9 @@ function mouseover(d) {
 			return (sequenceArray.indexOf(node) >= 0);
 		})
 	  	.style("opacity", 1);
-}
+};
 // Restore everything to full opacity when moving off the visualization.
 function mouseleave(d) {
-
   	// Hide the breadcrumb trail
   	d3.select("#trail").style("visibility", "hidden");
 
@@ -115,63 +110,73 @@ function mouseleave(d) {
 
   	// Revert view of root data
   	setTextForCenterInfo(undefined, undefined, 'I1');
-}
+};
 
 // Given a node in a partition layout, return an array of all of its ancestor
 // nodes, highest first, but excluding the root.
 function getAncestors(node) {
-  var path = [];
-  var current = node;
-  while (current.parent) {
-	path.unshift(current);
-	current = current.parent;
-  }
-  return path;
-}
+  	var path = [];
+  	var current = node;
+  	while (current.parent) {
+		path.unshift(current);
+		current = current.parent;
+  	}
+
+  	// And once again, because root should be always the first breadcrumb node
+  	path.unshift(current);
+
+  	return path;
+};
 
 function initializeBreadcrumbTrail() {
-  // Add the svg area.
-  var trail = d3.select("#sequence").append("svg:svg")
-	  .attr("width", width)
-	  .attr("height", 50)
-	  .attr("id", "trail");
-  // Add the label at the end, for the percentage.
-  trail.append("svg:text")
-	.attr("id", "endlabel")
-	.style("fill", "#000");
-}
+  	// Add the svg area.
+  	var trail = d3.select("#sequence").append("svg:svg")
+	  	.attr("width", width)
+	  	.attr("height", 50)
+	  	.attr("id", "trail");
+
+  	trail.append("svg:text")
+		.attr("id", "endlabel")
+		.style("fill", "#000");
+};
 // Generate a string that describes the points of a breadcrumb polygon.
 function breadcrumbPoints(d, i) {
-  var points = [];
-  points.push("0,0");
-  points.push(b.w + ",0");
-  points.push(b.w + b.t + "," + (b.h / 2));
-  points.push(b.w + "," + b.h);
-  points.push("0," + b.h);
-  if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
-	points.push(b.t + "," + (b.h / 2));
-  }
-  return points.join(" ");
-}
+  	var points = [];
+  	points.push("0,0");
+  	points.push(b.w + ",0");
+  	points.push(b.w + b.t + "," + (b.h / 2));
+  	points.push(b.w + "," + b.h);
+  	points.push("0," + b.h);
+  	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
+		points.push(b.t + "," + (b.h / 2));
+  	}
+  	return points.join(" ");
+};
 // Update the breadcrumb trail to show the current sequence and percentage.
 function updateBreadcrumbs(nodeArray) {
   	var g = d3.select("#trail")
 	  	.selectAll("g")
-	  	.data(nodeArray, function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
+	  	.data(nodeArray, function(d) { 
+	  		return getTextForBreadcrumb(d, undefined, undefined); 
+	  	});
 
   	// Add breadcrumb and label for entering nodes.
   	var entering = g.enter().append("svg:g");
 
   	entering.append("svg:polygon")
 	  	.attr("points", breadcrumbPoints)
-	  	.style("fill", function(d) { return d.color; });
+	  	.style("fill", function(d) { 
+	  		return d.color; 
+	  	});
 
   	entering.append("svg:text")
 	  	.attr("x", (b.w + b.t) / 2)
 	  	.attr("y", b.h / 2)
 	  	.attr("dy", "0.35em")
 	  	.attr("text-anchor", "middle")
-	  	.text(function(d) { return d.data.preNames + ' ' + d.data.lastNames_Birth; });
+	  	.text(function(d) { 
+	  		return getTextForBreadcrumb(d, undefined, undefined); 
+	  	});
 
   	// Set position for entering and updating nodes.
   	g.attr("transform", function(d, i) {
@@ -183,13 +188,13 @@ function updateBreadcrumbs(nodeArray) {
 
   	// Make the breadcrumb trail visible, if it's hidden.
   	d3.select("#trail").style("visibility", "");
-}
+};
 
 ////////////////////
 
 function pad(value, length) {
 	return (value.toString().length < length) ? pad("0"+value, length):value;
-}
+};
 function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)};
 function hexToG(h) {return parseInt((cutHex(h)).substring(2,4),16)};
 function hexToB(h) {return parseInt((cutHex(h)).substring(4,6),16)};
@@ -201,6 +206,16 @@ function toHex(n) {
  	n = Math.max(0,Math.min(n,255));
  	return "0123456789ABCDEF".charAt((n-n%16)/16) + "0123456789ABCDEF".charAt(n%16);
 };
+function countOfCharInStr(str, searchChar) {
+	var count = 0;
+	for(var i = 0; i < str.length; i++) {
+		if(str[i] === searchChar) {
+			count++;
+		}
+	}
+
+	return count;
+}
 
 function buildHierarchyArray() {
 	var indiv = getIndividual("I1");
@@ -287,8 +302,35 @@ function setTextForCenterInfo(d3d, indiv, indivId) {
 		}
 	}
 
-	document.getElementById("dates").innerHTML = 'Geb.: ' + birth + ' - Gest.: ' + death;
-}
+	document.getElementById("dates").innerHTML = birth.substring(birth.length - 4) + ' - ' + death.substring(death.length - 4);
+};
+function getTextForBreadcrumb(d3d, indiv, indivId) {
+	var individual = undefined;
+
+	if(d3d !== undefined) {
+		individual = d3d.data;
+	} 
+	else if(indiv !== undefined) {
+		individual = indiv;
+	}
+	else if(indivId !== undefined) {
+		for(var i = 0; i < dataSource.individuals.length; i++) {
+			if(dataSource.individuals[i].id === indivId) {
+				individual = dataSource.individuals[i];
+			}
+		}
+	}
+
+	if(individual === undefined) {
+		return 'XXX'
+	}
+
+	if(countOfCharInStr(individual.preNames, ' ') >= 1) {
+		return individual.preNames.substring(0, individual.preNames.indexOf(' ') + 2) + '. ' + individual.lastNames_Birth;
+	}
+
+	return individual.preNames + ' ' + individual.lastNames_Birth;
+};
 
 function getIndividual(individId) {
 	for(var i = 0; i < dataSource.individuals.length; i++) {
@@ -329,7 +371,7 @@ function startVis(evt) {
 			hierarchyArray = buildHierarchyArray();
 
 			createVisualization(hierarchyArray);
-			initializeBreadcrumbTrail();
+			setInitialData(hierarchyArray);
 		}
 		r.readAsText(file);
 	} else { 

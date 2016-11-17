@@ -18,7 +18,7 @@ body {
 
 #sequence {
   width: 100vw;
-  height: 40px;
+  height: 30px;
 }
 
 #sequence text {
@@ -45,10 +45,11 @@ body {
 }
 
 #name {
+  font-weight: 500;
   font-size: 1.5em;
   width: 100%;
 }
 #dates {
-  font-size: 1em;
+  font-size: 1.3em;
   width: 100%;
 }
