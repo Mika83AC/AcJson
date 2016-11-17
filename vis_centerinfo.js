@@ -2,6 +2,7 @@
 
 var dataSource = {};
 var hierarchyArray = {};
+var startIndividualId = 'I1';
 
 // Dimensions of sunburst.
 var width = document.body.clientWidth;
@@ -109,7 +110,7 @@ function mouseleave(d) {
 		});
 
   	// Revert view of root data
-  	setTextForCenterInfo(undefined, undefined, 'I1');
+  	setTextForCenterInfo(undefined, undefined, startIndividualId);
 };
 
 // Given a node in a partition layout, return an array of all of its ancestor
@@ -217,8 +218,8 @@ function countOfCharInStr(str, searchChar) {
 	return count;
 }
 
-function buildHierarchyArray() {
-	var indiv = getIndividual("I1");
+function buildHierarchyArray(startIndividualId) {
+	var indiv = getIndividual(startIndividualId);
 	var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
 	indivNode.data = indiv;
 
@@ -303,6 +304,8 @@ function setTextForCenterInfo(d3d, indiv, indivId) {
 	}
 
 	document.getElementById("dates").innerHTML = birth.substring(birth.length - 4) + ' - ' + death.substring(death.length - 4);
+
+	document.getElementById("uplink").innerHTML = 'Zu Kind wechseln';
 };
 function getTextForBreadcrumb(d3d, indiv, indivId) {
 	var individual = undefined;
@@ -368,7 +371,7 @@ function startVis(evt) {
 		var r = new FileReader();
 		r.onload = function(e) { 
 			dataSource = JSON.parse(e.target.result);
-			hierarchyArray = buildHierarchyArray();
+			hierarchyArray = buildHierarchyArray(startIndividualId);
 
 			createVisualization(hierarchyArray);
 			setInitialData(hierarchyArray);
@@ -378,5 +381,32 @@ function startVis(evt) {
 		alert("Failed to load file");
 	}
 };
+function findAndSetChildAsRoot(evt) {
+	var family = undefined;
+	for(var i = 0; i < dataSource.families.length; i++) {
+		if(dataSource.families[i].husbandId === startIndividualId || dataSource.families[i].wifeId === startIndividualId) {
+			family = dataSource.families[i];
+		}
+	}
+
+	if(family === undefined) {
+		return;
+	}
+
+	var child = undefined;
+	for(var i = 0; i < dataSource.children.length; i++) {
+		if(dataSource.children[i].familyId === family.id) {
+			child = dataSource.children[i];
+		}
+	}
+
+	if(child !== undefined) {
+		startIndividualId = child.individualId;
+	}
+	else {
+		alert('');
+	}
+};
 
 window.document.getElementById('fileinput').addEventListener('change', startVis, false);
+window.document.getElementById('uplink').addEventListener('click', findAndSetChildAsRoot, false);
