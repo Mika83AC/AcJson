@@ -30,7 +30,6 @@ var arc = d3.svg.arc()
 	.innerRadius(function(d) { return Math.sqrt(d.y); })
 	.outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
 
-// Main function to draw and set up the visualization, once we have the data.
 function createVisualization(json) {
 
 	// Basic setup of page elements.
@@ -75,7 +74,6 @@ function setInitialData(json) {
   	setTextForCenterInfo(json, undefined, undefined);
 };
 
-// Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
 	setTextForCenterInfo(d, undefined, undefined);
 
@@ -92,7 +90,6 @@ function mouseover(d) {
 		})
 	  	.style("opacity", 1);
 };
-// Restore everything to full opacity when moving off the visualization.
 function mouseleave(d) {
   	// Hide the breadcrumb trail
   	d3.select("#trail").style("visibility", "hidden");
@@ -113,8 +110,6 @@ function mouseleave(d) {
   	setTextForCenterInfo(undefined, undefined, startIndividualId);
 };
 
-// Given a node in a partition layout, return an array of all of its ancestor
-// nodes, highest first, but excluding the root.
 function getAncestors(node) {
   	var path = [];
   	var current = node;
@@ -140,7 +135,6 @@ function initializeBreadcrumbTrail() {
 		.attr("id", "endlabel")
 		.style("fill", "#000");
 };
-// Generate a string that describes the points of a breadcrumb polygon.
 function breadcrumbPoints(d, i) {
   	var points = [];
   	points.push("0,0");
@@ -153,7 +147,6 @@ function breadcrumbPoints(d, i) {
   	}
   	return points.join(" ");
 };
-// Update the breadcrumb trail to show the current sequence and percentage.
 function updateBreadcrumbs(nodeArray) {
   	var g = d3.select("#trail")
 	  	.selectAll("g")
@@ -404,7 +397,7 @@ function findAndSetChildAsRoot(evt) {
 		startIndividualId = child.individualId;
 	}
 	else {
-		alert('');
+		alert('Kein Kind hinterlegt.');
 	}
 };
 
