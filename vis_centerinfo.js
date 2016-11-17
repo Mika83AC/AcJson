@@ -4,8 +4,8 @@ var dataSource = {};
 var hierarchyArray = {};
 
 // Dimensions of sunburst.
-var width = 1300;
-var height = 750;
+var width = document.body.clientWidth;
+var height = document.body.clientHeight - 100;
 var radius = Math.min(width, height) / 1.8;
 
 // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
@@ -47,67 +47,73 @@ function createVisualization(json) {
 	  return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
 	  });
 
-  var path = vis.data([json]).selectAll("path")
-	  .data(nodes)
-	  .enter().append("svg:path")
-	  .attr("display", function(d) { return d.depth ? null : "none"; })
-	  .attr("d", arc)
-	  .attr("fill-rule", "evenodd")
-	  .style("fill", function(d) { return d.color; })
-	  .style("opacity", 1)
-	  .on("mouseover", mouseover);
+  	var path = vis.data([json]).selectAll("path")
+	  	.data(nodes)
+	  	.enter().append("svg:path")
+	  	.attr("display", function(d) { return d.depth ? null : "none"; })
+	  	.attr("d", arc)
+	  	.attr("fill-rule", "evenodd")
+	  	.style("fill", function(d) { return d.color; })
+	  	.style("opacity", 1)
+	  	.on("mouseover", mouseover);
 
-  // Add the mouseleave handler to the bounding circle.
-  d3.select("#container").on("mouseleave", mouseleave);
+  	// Add the mouseleave handler to the bounding circle.
+  	d3.select("#container").on("mouseleave", mouseleave);
+
+  	var exp = document.getElementById("explanation");
+  	exp.style.width = '200px';
+  	exp.style.height = '200px';
+	exp.style.left = (width / 2 - 100) + 'px';
+	exp.style.top = (height / 2 - 100) + 'px';
 
   	// Initial view of root data
-  d3.select("#percentage").text(json.data.preNames + ' ' + json.data.lastNames_Birth);
+  	d3.select("#percentage").text(json.data.preNames + ' ' + json.data.lastNames_Birth);
 
-	// Get total size of the tree = value of root node from partition.
-  	totalSize = path.node().__data__.value;
- };
+		// Get total size of the tree = value of root node from partition.
+  		totalSize = path.node().__data__.value;
+};
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
-  d3.select("#percentage").text(d.data.preNames + ' ' + d.data.lastNames_Birth);
+  	d3.select("#percentage").text(d.data.preNames + ' ' + d.data.lastNames_Birth);
 
-  //d3.select("#explanation").style("visibility", "");
+  	//d3.select("#explanation").style("visibility", "");
 
-  var sequenceArray = getAncestors(d);
-  updateBreadcrumbs(sequenceArray);
+  	var sequenceArray = getAncestors(d);
+  	updateBreadcrumbs(sequenceArray);
 
-  // Fade all the segments.
-  d3.selectAll("path").style("opacity", 0.3);
+  	// Fade all the segments.
+  	d3.selectAll("path").style("opacity", 0.3);
 
-  // Then highlight only those that are an ancestor of the current segment.
-  vis.selectAll("path")
-	  .filter(function(node) {
-				return (sequenceArray.indexOf(node) >= 0);
-			  })
-	  .style("opacity", 1);
+  	// Then highlight only those that are an ancestor of the current segment.
+  	vis.selectAll("path")
+	  	.filter(function(node) {
+			return (sequenceArray.indexOf(node) >= 0);
+		})
+	  	.style("opacity", 1);
 }
 // Restore everything to full opacity when moving off the visualization.
 function mouseleave(d) {
 
-  // Hide the breadcrumb trail
-  d3.select("#trail").style("visibility", "hidden");
+  	// Hide the breadcrumb trail
+  	d3.select("#trail").style("visibility", "hidden");
 
-  // Deactivate all segments during transition.
-  d3.selectAll("path").on("mouseover", null);
+  	// Deactivate all segments during transition.
+  	d3.selectAll("path").on("mouseover", null);
 
-  // Transition each segment to full opacity and then reactivate it.
-  d3.selectAll("path")
-	  .transition()
-	  .duration(1000)
-	  .style("opacity", 1)
-	  .each("end", function() {
-			  d3.select(this).on("mouseover", mouseover);
-			});
+  	// Transition each segment to full opacity and then reactivate it.
+  	d3.selectAll("path")
+	  	.transition()
+	  	.duration(1000)
+	  	.style("opacity", 1)
+	  	.each("end", function() {
+			d3.select(this).on("mouseover", mouseover);
+		});
 
-  //d3.select("#explanation").style("visibility", "hidden");
+  	//d3.select("#explanation").style("visibility", "hidden");
 
-  // Revert view of root data
-  d3.select("#percentage").text(hierarchyArray.data.preNames + ' ' + hierarchyArray.data.lastNames_Birth);
+  	// Revert view of root data
+  	d3.select("#percentage").text(hierarchyArray.data.preNames + ' ' + hierarchyArray.data.lastNames_Birth);
 }
 
 // Given a node in a partition layout, return an array of all of its ancestor

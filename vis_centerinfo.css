@@ -1,21 +1,24 @@
+html {
+  width: 100vw;
+  height: 100vh;
+}
+
 body {
   font-family: 'Open Sans', sans-serif;
   font-size: 12px;
   font-weight: 400;
   background-color: #fff;
-  width: 960px;
-  height: 700px;
-  margin-top: 10px;
+  margin: 0 0 0 0;
 }
 
 #main {
-  float: left;
-  width: 750px;
+  width: 100vw;
+  height: 100vh;
 }
 
 #sequence {
-  width: 600px;
-  height: 70px;
+  width: 100vw;
+  height: 40px;
 }
 
 #sequence text {
@@ -33,12 +36,11 @@ body {
 
 #explanation {
   position: absolute;
-  top: 350px;
-  left: 580px;
-  width: 140px;
   text-align: center;
-  color: #666;
   z-index: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #percentage {
