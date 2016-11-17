@@ -9,7 +9,7 @@ var height = document.body.clientHeight - 100;
 var radius = Math.min(width, height) / 1.8;
 
 // Breadcrumb dimensions: width, height, spacing, width of tip/tail.
-var b = { w: 140, h: 30, s: 3, t: 10 };
+var b = { w: 170, h: 30, s: 3, t: 10 };
 
 // Total size of all segments; we set this later, after loading the data.
 var totalSize = 0; 
@@ -41,11 +41,11 @@ function createVisualization(json) {
 	  .attr("r", radius)
 	  .style("opacity", 0);
 
-  // For efficiency, filter nodes to keep only those large enough to see.
-  var nodes = partition.nodes(json)
-	  .filter(function(d) {
-	  return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
-	  });
+  	// For efficiency, filter nodes to keep only those large enough to see.
+  	var nodes = partition.nodes(json)
+	  	.filter(function(d) {
+	  		return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
+	  	});
 
   	var path = vis.data([json]).selectAll("path")
 	  	.data(nodes)
@@ -67,15 +67,18 @@ function createVisualization(json) {
 	exp.style.top = (height / 2 - 100) + 'px';
 
   	// Initial view of root data
-  	d3.select("#percentage").text(json.data.preNames + ' ' + json.data.lastNames_Birth);
+  	var text = getTextForCenterInfo(json, undefined, undefined);
+  	d3.select("#percentage").text(text);
 
-		// Get total size of the tree = value of root node from partition.
-  		totalSize = path.node().__data__.value;
+	// Get total size of the tree = value of root node from partition.
+  	totalSize = path.node().__data__.value;
 };
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
-  	d3.select("#percentage").text(d.data.preNames + ' ' + d.data.lastNames_Birth);
+	var text = getTextForCenterInfo(d, undefined, undefined);
+  	//d3.select("#percentage").text(text);
+  	document.getElementById("percentage").innerHTML = text;
 
   	//d3.select("#explanation").style("visibility", "");
 
@@ -113,7 +116,8 @@ function mouseleave(d) {
   	//d3.select("#explanation").style("visibility", "hidden");
 
   	// Revert view of root data
-  	d3.select("#percentage").text(hierarchyArray.data.preNames + ' ' + hierarchyArray.data.lastNames_Birth);
+  	var text = getTextForCenterInfo(undefined, undefined, 'I1');
+  	document.getElementById("percentage").innerHTML = text;
 }
 
 // Given a node in a partition layout, return an array of all of its ancestor
@@ -244,6 +248,51 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 	} 
 
 	return indivNode;
+}
+
+function getTextForCenterInfo(d3d, indiv, indivId) {
+	var individual = undefined;
+
+	if(d3d !== undefined) {
+		individual = d3d.data;
+	} 
+	else if(indiv !== undefined) {
+		individual = indiv;
+	}
+	else if(indivId !== undefined) {
+		for(var i = 0; i < dataSource.individuals.length; i++) {
+			if(dataSource.individuals[i].id === indivId) {
+				individual = dataSource.individuals[i];
+			}
+		}
+	}
+
+	if(individual === undefined) {
+		return 'Person konnte nicht ermittelt werden!'
+	}
+
+	var individualEvents = [];
+	for(var i = 0; i < dataSource.events.length; i++) {
+		if(dataSource.events[i].individualId === individual.id) {
+			individualEvents.push(dataSource.events[i]);
+		}
+	}
+
+	var text = individual.preNames + ' ' + individual.lastNames_Birth;
+	var birth = '', death = '';
+
+	for(var i = 0; i < individualEvents.length; i++) {
+		if(individualEvents[i].eventTypeId === 1){
+			birth = individualEvents[i].date;
+		}
+		else if(individualEvents[i].eventTypeId === 5){
+			death = individualEvents[i].date;
+		}
+	}
+
+	text += '<BR>' + birth + ' - ' + death;
+
+	return text;
 }
 
 function getIndividual(individId) {

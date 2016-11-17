@@ -82,27 +82,30 @@ function processFile(fileContent) {
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 DATE")) {
 			event = newEvent(1, individual.id, 0);
+
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
-			if(event === {} || event.eventType !== 1 || event.individualId !== individual.id) {
+			if(event === undefined || event.eventTypeId !== 1 || event.individualId !== individual.id) {
 				event = newEvent(1, individual.id, 0);
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
+			event = undefined;
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 DATE")) {
 			event = newEvent(5, individual.id, 0);
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
-			if(event === {} || event.eventType !== 5 || event.individualId !== individual.id) {
+			if(event === undefined || event.eventTypeId !== 5 || event.individualId !== individual.id) {
 				event = newEvent(5, individual.id, 0);
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
 			events.push(event);
+			event = undefined;
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 FAMS")) {
 			// Familie des Individuals
