@@ -67,8 +67,8 @@ function createVisualization(json) {
 	exp.style.top = (height / 2 - 100) + 'px';
 
   	// Initial view of root data
-  	var text = getTextForCenterInfo(json, undefined, undefined);
-  	d3.select("#percentage").text(text);
+  	setTextForCenterInfo(json, undefined, undefined);
+  	//d3.select("#name").text(text);
 
 	// Get total size of the tree = value of root node from partition.
   	totalSize = path.node().__data__.value;
@@ -76,9 +76,9 @@ function createVisualization(json) {
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
-	var text = getTextForCenterInfo(d, undefined, undefined);
+	setTextForCenterInfo(d, undefined, undefined);
   	//d3.select("#percentage").text(text);
-  	document.getElementById("percentage").innerHTML = text;
+  	//document.getElementById("name").innerHTML = text;
 
   	//d3.select("#explanation").style("visibility", "");
 
@@ -113,11 +113,8 @@ function mouseleave(d) {
 			d3.select(this).on("mouseover", mouseover);
 		});
 
-  	//d3.select("#explanation").style("visibility", "hidden");
-
   	// Revert view of root data
-  	var text = getTextForCenterInfo(undefined, undefined, 'I1');
-  	document.getElementById("percentage").innerHTML = text;
+  	setTextForCenterInfo(undefined, undefined, 'I1');
 }
 
 // Given a node in a partition layout, return an array of all of its ancestor
@@ -250,7 +247,7 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 	return indivNode;
 }
 
-function getTextForCenterInfo(d3d, indiv, indivId) {
+function setTextForCenterInfo(d3d, indiv, indivId) {
 	var individual = undefined;
 
 	if(d3d !== undefined) {
@@ -278,9 +275,9 @@ function getTextForCenterInfo(d3d, indiv, indivId) {
 		}
 	}
 
-	var text = individual.preNames + ' ' + individual.lastNames_Birth;
-	var birth = '', death = '';
+	document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
 
+	var birth = '', death = '';
 	for(var i = 0; i < individualEvents.length; i++) {
 		if(individualEvents[i].eventTypeId === 1){
 			birth = individualEvents[i].date;
@@ -290,9 +287,7 @@ function getTextForCenterInfo(d3d, indiv, indivId) {
 		}
 	}
 
-	text += '<BR>' + birth + ' - ' + death;
-
-	return text;
+	document.getElementById("dates").innerHTML = 'Geb.: ' + birth + ' - Gest.: ' + death;
 }
 
 function getIndividual(individId) {

@@ -39,10 +39,16 @@ body {
   text-align: center;
   z-index: -1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
 }
 
-#percentage {
+#name {
   font-size: 1.5em;
+  width: 100%;
+}
+#dates {
+  font-size: 1em;
+  width: 100%;
 }
