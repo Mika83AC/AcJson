@@ -2,7 +2,7 @@
 
 var dataSource = {};
 var hierarchyArray = {};
-var startIndividualId = 'I6';
+var startIndividualId = 'I1';
 
 // Dimensions of sunburst.
 var width = document.body.clientWidth;
@@ -57,7 +57,7 @@ function createVisualization(json) {
 };
 function setInitialData(json) {
 	// Initial view of root data
-  	setTextForCenterInfo(json, undefined, undefined);
+  	setTextForCenterInfo(json, undefined, undefined, true);
 };
 
 function click(d) {
@@ -65,7 +65,7 @@ function click(d) {
 	refreshVis();
 }
 function mouseover(d) {
-	setTextForCenterInfo(d, undefined, undefined);
+	setTextForCenterInfo(d, undefined, undefined, false);
 
   	var sequenceArray = getAncestors(d);
   	updateBreadcrumbs(sequenceArray);
@@ -90,14 +90,14 @@ function mouseleave(d) {
   	// Transition each segment to full opacity and then reactivate it.
   	d3.selectAll("path")
 	  	.transition()
-	  	.duration(500)
+	  	.duration(250)
 	  	.style("opacity", 1)
 	  	.each("end", function() {
 			d3.select(this).on("mouseover", mouseover);
 		});
 
   	// Revert view of root data
-  	setTextForCenterInfo(undefined, undefined, startIndividualId);
+  	setTextForCenterInfo(undefined, undefined, startIndividualId, true);
 };
 
 function getAncestors(node) {
@@ -246,9 +246,10 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 	return indivNode;
 }
 
-function setTextForCenterInfo(d3d, indiv, indivId) {
+function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
 	var individual = undefined;
 
+	// Individual ermitteln
 	if(d3d !== undefined) {
 		individual = d3d.data;
 	} 
@@ -267,6 +268,9 @@ function setTextForCenterInfo(d3d, indiv, indivId) {
 		return 'Person konnte nicht ermittelt werden!'
 	}
 
+	document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
+
+	// Events dieser Person ermitteln
 	var individualEvents = [];
 	for(var i = 0; i < dataSource.events.length; i++) {
 		if(dataSource.events[i].individualId === individual.id) {
@@ -274,8 +278,7 @@ function setTextForCenterInfo(d3d, indiv, indivId) {
 		}
 	}
 
-	document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
-
+	// Daten schreiben wenn vorhanden
 	var birth = '', death = '';
 	for(var i = 0; i < individualEvents.length; i++) {
 		if(individualEvents[i].eventTypeId === 1){
@@ -288,7 +291,11 @@ function setTextForCenterInfo(d3d, indiv, indivId) {
 
 	document.getElementById("dates").innerHTML = birth.substring(birth.length - 4) + ' - ' + death.substring(death.length - 4);
 
-	document.getElementById("uplink").innerHTML = 'Zu Kind wechseln';
+	// Links zu Kindern setzen
+	removeChildLinks();
+	if(createChildLinks) {
+		findAndSetChildLinks(individual.id);
+	}
 };
 function getTextForBreadcrumb(d3d, indiv, indivId) {
 	var individual = undefined;
@@ -388,34 +395,52 @@ function refreshVis() {
 
 	startVis();
 }
-function findAndSetChildAsRoot(evt) {
+
+function removeChildLinks() {
+	var cont = document.getElementById('explanation');
+	var links = document.getElementsByClassName('uplink');
+
+	while(links[0]) {
+	   links[0].parentNode.removeChild(links[0]);
+	}
+}
+function findAndSetChildLinks(parentId) {
 	var family = undefined;
 	for(var i = 0; i < dataSource.families.length; i++) {
-		if(dataSource.families[i].husbandId === startIndividualId || dataSource.families[i].wifeId === startIndividualId) {
+		if(dataSource.families[i].husbandId === parentId || dataSource.families[i].wifeId === parentId) {
 			family = dataSource.families[i];
 		}
 	}
 
 	if(family === undefined) {
-		alert('Hat noch keine Familie gegründet.');
 		return;
 	}
 
-	var child = undefined;
+	var children = [];
 	for(var i = 0; i < dataSource.children.length; i++) {
 		if(dataSource.children[i].familyId === family.id) {
-			child = dataSource.children[i];
+			children.push(dataSource.children[i]);
 		}
 	}
 
-	if(child !== undefined) {
-		startIndividualId = child.individualId;
-		refreshVis();
+	if(children.length > 0) {
+		var cont = document.getElementById('explanation');
+
+		for(var i = 0; i < children.length; i++) {
+			var a = document.createElement('a');
+			a.id = children[i].individualId;
+			a.href = '#';
+			a.innerHTML = 'Gehe zu ' + getTextForBreadcrumb(undefined, undefined, children[i].individualId);
+			a.className = 'uplink';
+			a.addEventListener('click', setChildAsRoot, false);
+
+			cont.appendChild(a);
+		}
 	}
-	else {
-		alert('Kein Kind hinterlegt.');
-	}
+};
+function setChildAsRoot(e) {
+	startIndividualId = e.currentTarget.id;
+	refreshVis();
 };
 
 window.document.getElementById('fileinput').addEventListener('change', loadFile, false);
-window.document.getElementById('uplink').addEventListener('click', findAndSetChildAsRoot, false);
