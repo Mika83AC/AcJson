@@ -316,7 +316,6 @@ function AcJSONtoGEDCOM(acJSON) {
 		for(var k = 0; k < data.families.length; k ++) {
 			if(data.families[k].husbandId === data.individuals[i].id || data.families[k].wifeId === data.individuals[i].id) {
 				gedStr += "1 FAMS @" + data.families[k].id + "@" + lb;
-				break;
 			}
 		}
 
@@ -327,14 +326,22 @@ function AcJSONtoGEDCOM(acJSON) {
 			}
 		}
 
-		gedStr += "1 _FSFTID " + data.individuals[i].familySearchOrgId + lb;
+		if(data.individuals[i].familySearchOrgId !== undefined) {
+			gedStr += "1 _FSFTID " + data.individuals[i].familySearchOrgId + lb;
+		}
 	}
 
 	// Familien
 	for(var i = 0; i < data.families.length; i++) {
 		gedStr += "0 @" + data.families[i].id + "@ FAM" + lb;
-		gedStr += "1 HUSB @" + data.families[i].husbandId + "@" + lb;
-		gedStr += "1 WIFE @" + data.families[i].wifeId + "@" + lb;
+
+		if(data.families[i].husbandId !== undefined) {
+			gedStr += "1 HUSB @" + data.families[i].husbandId + "@" + lb;
+		}
+
+		if(data.families[i].wifeId !== undefined) {
+			gedStr += "1 WIFE @" + data.families[i].wifeId + "@" + lb;
+		}
 
 		for(var j = 0; j < data.children.length; j++) {
 			if(data.children[j].familyId === data.families[i].id) {
@@ -369,7 +376,9 @@ function AcJSONtoGEDCOM(acJSON) {
 		
 		// Divorces are not part of the GEDCOM format
 
-		gedStr += "1 _FSFTID " + data.families[i].familySearchOrgId + lb;
+		if(data.families[i].familySearchOrgId !== undefined) {
+			gedStr += "1 _FSFTID " + data.families[i].familySearchOrgId + lb;
+		}
 	}
 
 	gedStr += "0 TRLR" + lb;
