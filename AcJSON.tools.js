@@ -3,54 +3,62 @@
 var nextEventId = 1;
 var nextChildId = 1;
 
-var Individual = function() {
-   this.id = 0;
-	this.preNames = "";
-	this.lastNames_Birth = "";
-	this.lastNames_Mariage = "";
-	this.sexId = 1;
-	this.memo = "";
-	this.familySearchOrgId = "";
-}
-var Family = function() {
-   this.id = 0;
-	this.husbandId = 0;
-	this.wifeId = 0;
-	this.memo = "";
-	this.familySearchOrgId = "";
-}
-var Child = function() {
-   this.id = 0;
-	this.individualId = 0;
-	this.familyId = 0;
-	this.memo = "";
-}
-var Event = function() {
-   this.id = 0;
-	this.eventTypeId = 0;
-	this.individualId = 0;
-	this.familyId = 0;
-	this.date = "";
-	this.place = "";
-	this.memo = "";
-}
-
-function gedcomToJSON(evt) {
-	var file = evt.target.files[0]; 
-
-	if (file) {
-		var r = new FileReader();
-		r.onload = function(e) { 
-			var jsonContent = processFile(e.target.result);
-			makeFile(jsonContent);
-		}
-		r.readAsText(file);
-	} else { 
-		alert("Failed to load file");
-	}
+// Classes for AcJSON format
+class Individual {
+	constructor(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+ 		this.id = id;
+		this.preNames = preNames;
+		this.lastNames_Birth = lastNames_Birth;
+		this.lastNames_Mariage = lastNames_Mariage;
+		this.sexId = sexId;
+		this.memo = memo;
+		this.familySearchOrgId = familySearchOrgId;
+		}		
 };
-function processFile(fileContent) {
-	var lines = fileContent.split('\n');
+class Family {
+	constructor(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+ 		this.id = id;
+		this.preNames = preNames;
+		this.lastNames_Birth = lastNames_Birth;
+		this.lastNames_Mariage = lastNames_Mariage;
+		this.sexId = sexId;
+		this.memo = memo;
+		this.familySearchOrgId = familySearchOrgId;
+		}		
+};
+class Child {
+	constructor(id, individualId, familyId, memo) {
+ 		this.id = id;
+		this.individualId = individualId;
+		this.familyId = familyId;
+		this.memo = "";
+		}			
+};
+class Event {
+	constructor(id, eventTypeId, individualId, familyId, date, place, memo) {
+ 		this.id = id;
+		this.eventTypeId = eventTypeId;
+		this.individualId = individualId;
+		this.familyId = familyId;
+		this.date = date;
+		this.place = place;
+		this.memo = memo;
+		}		
+};
+class Media {
+	constructor(id, mediaTypeId, individualId, familyId, path, place, memo) {
+ 		this.id = id;
+		this.mediaTypeId = 0;
+		this.individualId = individualId;
+		this.familyId = familyId;
+		this.path = path;
+		this.memo = memo;
+		}		
+};
+
+// Functions
+function gedcomToAcJSON(gedcomData) {
+	var lines = gedcomData.split('\n');
 	var lastCommandSection = "";
 	var lastCommandLine = "";
 
@@ -81,13 +89,12 @@ function processFile(fileContent) {
 			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 DATE")) {
-			event = newEvent(1, individual.id, 0);
-
+			event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
 			if(event === undefined || event.eventTypeId !== 1 || event.individualId !== individual.id) {
-				event = newEvent(1, individual.id, 0);
+				event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -95,12 +102,12 @@ function processFile(fileContent) {
 			event = undefined;
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 DATE")) {
-			event = newEvent(5, individual.id, 0);
+			event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
 			if(event === undefined || event.eventTypeId !== 5 || event.individualId !== individual.id) {
-				event = newEvent(5, individual.id, 0);
+				event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -140,12 +147,12 @@ function processFile(fileContent) {
 			children.push(child);
 		}
 		if(lastCommandSection === "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 DATE")) {
-			event = newEvent(3, 0, family.id);
+			event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
 			if(event === {} || event.eventType !== 3 || event.familyId !== family.id) {
-				event = newEvent(3, 0, family.id);
+				event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -172,31 +179,8 @@ function processFile(fileContent) {
 	obj.children = children;
 	obj.events = events;
 
+	nextEventId = 1;
+	nextChildId = 1;
+
 	return JSON.stringify(obj);
 };
-function makeFile(text) {
-	var a = document.getElementById("downloadlink");
-  	var data = new Blob([text], {type: 'text/plain'});
-
-  	a.href = URL.createObjectURL(data);
-  	a.innerHTML = "Download AcJSON file here";
-};
-function resetControls() {
-	var a = document.getElementById("downloadlink");
-	var inp = document.getElementById('fileinput');
-
-	inp.value = "";
-  	a.innerHTML = "";
-};
-
-function newEvent(eventType, individualId, familyId) {
-	var event = new Event();
-	event.id = nextEventId++;
-	event.eventTypeId = eventType;
-	event.individualId = individualId;
-	event.familyId = familyId;
-	return event;
-};
-
-window.document.getElementById('fileinput').addEventListener('change', gedcomToJSON, false);
-window.document.getElementById('downloadlink').addEventListener('click', resetControls, false);
