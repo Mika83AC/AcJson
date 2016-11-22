@@ -57,7 +57,7 @@ class Media {
 };
 
 // Functions
-function gedcomToAcJSON(gedcomData) {
+function GEDCOMtoAcJSON(gedcomData) {
 	var lines = gedcomData.split('\n');
 	var lastCommandSection = "";
 	var lastCommandLine = "";
@@ -183,4 +183,74 @@ function gedcomToAcJSON(gedcomData) {
 	nextChildId = 1;
 
 	return JSON.stringify(obj);
+};
+function AcJSONtoGEDCOM(acJSON) {
+	var lb = "\r\n";
+	var data = JSON.parse(acJSON);
+	var gedStr = "0 HEAD" + lb;
+	gedStr += "1 CHAR UTF-8" + lb;
+	gedStr += "1 GEDC" + lb;
+	gedStr += "2 VERS 5.5" + lb;
+	gedStr += "2 FORM LINEAGE-LINKED" + lb;
+
+	for(var i = 0; i < data.individuals.length; i++) {
+		gedStr += "0 @" + data.individuals[i].id + "@ INDI" + lb;
+		gedStr += "1 NAME " + data.individuals[i].preNames + " /" + data.individuals[i].lastNames_Birth + "/" + lb;
+		gedStr += "1 SEX " + (data.individuals[i].sexId === 1 ? "M" : "F") + lb;
+
+		var birth = undefined, death = undefined;
+		for(var j = 0; j < data.events.length; j++) {
+			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 1) {
+				birth = data.events[j];
+			}
+			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 5) {
+				death = data.events[j];
+			}
+
+			if(birth !== undefined && death !== undefined) {
+				break;
+			}
+		}
+
+		if(birth !== undefined) {
+			gedStr += "1 BIRT" + lb;
+
+			if(birth.date !== undefined) {
+				gedStr += "2 DATE " + birth.date + lb;
+			}
+			if(birth.place !== undefined) {
+				gedStr += "2 PLAC " + birth.place + lb;
+			}
+		}
+
+		if(death !== undefined) {
+			gedStr += "1 DEAT" + lb;
+
+			if(death.date !== undefined) {
+				gedStr += "2 DATE " + death.date + lb;
+			}
+			if(death.place !== undefined) {
+				gedStr += "2 PLAC " + death.place + lb;
+			}
+		}
+
+		for(var k = 0; k < data.families.length; k ++) {
+			if(data.families[k].husbandId === data.individuals[i].id || data.families[k].wifeId === data.individuals[i].id) {
+				gedStr += "1 FAMS @" + data.families[k].id + "@" + lb;
+				break;
+			}
+		}
+
+		for(var l = 0; l < data.children.length; l ++) {
+			if(data.children[l].individualId === data.individuals[i].id) {
+				gedStr += "1 FAMC @" + data.children[l].familyId + "@" + lb;
+				break;
+			}
+		}
+
+		gedStr += "1 _FSFTID " + data.individuals[i].familySearchOrgId + lb;
+	}
+
+	gedStr += "0 TRLR" + lb;
+	return gedStr;
 };

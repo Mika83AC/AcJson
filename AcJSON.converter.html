@@ -1,0 +1,28 @@
+<html>
+
+<head>
+<title>GEDCOM to AcJSON Converter</title>
+</head>
+
+<body>
+	<p>
+		Convert GEDCOM to AcJSON:<br> 
+		<input type="file" id="fileinput_ged" accept=".ged"/>
+	</p>
+	<p>
+		<a download="data.json" id="downloadlink_json"></a>
+	</p>
+	<BR>
+	<p>
+		Convert AcJSON to GEDCOM:<br> 
+		<input type="file" id="fileinput_json" accept=".json"/>
+	</p>
+	<p>
+		<a download="data.ged" id="downloadlink_ged"></a>
+	</p>
+</body>
+
+<script type="text/javascript" src="AcJSON.tools.js"> </script>
+<script type="text/javascript" src="AcJSON.converter.js"> </script>
+
+</html>
