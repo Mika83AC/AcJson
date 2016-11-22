@@ -79,6 +79,10 @@ function GEDCOMtoAcJSON(gedcomData) {
 			individual = new Individual();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
+			if(individual.id === "I80") {
+				var x = "";
+			}
+
 			lastCommandSection = "INDI";
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 NAME")) {
@@ -89,11 +93,21 @@ function GEDCOMtoAcJSON(gedcomData) {
 			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 DATE")) {
+			if(event !== undefined) {
+				events.push(event);
+				event = undefined;
+			}
+
 			event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
 			if(event === undefined || event.eventTypeId !== 1 || event.individualId !== individual.id) {
+				if(event !== undefined) {
+					events.push(event);
+					event = undefined;
+				}
+
 				event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			}
 
@@ -102,11 +116,21 @@ function GEDCOMtoAcJSON(gedcomData) {
 			event = undefined;
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 DATE")) {
+			if(event !== undefined) {
+				events.push(event);
+				event = undefined;
+			}
+
 			event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
 			if(event === undefined || event.eventTypeId !== 2 || event.individualId !== individual.id) {
+				if(event !== undefined) {
+					events.push(event);
+					event = undefined;
+				}
+
 				event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			}
 
@@ -115,11 +139,21 @@ function GEDCOMtoAcJSON(gedcomData) {
 			event = undefined;
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 DATE")) {
+			if(event !== undefined) {
+				events.push(event);
+				event = undefined;
+			}
+
 			event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
 			if(event === undefined || event.eventTypeId !== 5 || event.individualId !== individual.id) {
+				if(event !== undefined) {
+					events.push(event);
+					event = undefined;
+				}
+
 				event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			}
 
@@ -140,6 +174,10 @@ function GEDCOMtoAcJSON(gedcomData) {
 
 		// Families
 		if(line.startsWith("0") && line.endsWith("FAM")) {
+			if(family !== undefined) {
+				families.push(family);
+			}
+
 			family = new Family();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
@@ -160,11 +198,21 @@ function GEDCOMtoAcJSON(gedcomData) {
 			children.push(child);
 		}
 		if(lastCommandSection === "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 DATE")) {
+			if(event !== undefined) {
+				events.push(event);
+				event = undefined;
+			}
+
 			event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
 			if(event === {} || event.eventTypeId !== 3 || event.familyId !== family.id) {
+				if(event !== undefined) {
+					events.push(event);
+					event = undefined;
+				}
+
 				event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
 			}
 
@@ -174,6 +222,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 		if(lastCommandSection === "FAM" && line.startsWith("1 _FSFTID")) {
 			family.familySearchOrgId = line.substring(("1 _FSFTID").length + 1);
 			families.push(family);
+			family = undefined;
 		}
 
 		// CommandLine merken
@@ -227,6 +276,10 @@ function AcJSONtoGEDCOM(acJSON) {
 			if(birth !== undefined && baptism !== undefined && death !== undefined) {
 				break;
 			}
+		}
+
+		if(data.individuals[i].id === "I11") {
+			var x = "";
 		}
 
 		if(birth !== undefined) {
