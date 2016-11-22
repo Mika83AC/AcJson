@@ -101,6 +101,19 @@ function GEDCOMtoAcJSON(gedcomData) {
 			events.push(event);
 			event = undefined;
 		}
+		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 DATE")) {
+			event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
+			event.date = line.substring(("2 DATE").length + 1);
+		}
+		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
+			if(event === undefined || event.eventTypeId !== 2 || event.individualId !== individual.id) {
+				event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
+			}
+
+			event.place = line.substring(("2 PLAC").length + 1);
+			events.push(event);
+			event = undefined;
+		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 DATE")) {
 			event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
@@ -151,7 +164,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
-			if(event === {} || event.eventType !== 3 || event.familyId !== family.id) {
+			if(event === {} || event.eventTypeId !== 3 || event.familyId !== family.id) {
 				event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
 			}
 
@@ -193,21 +206,25 @@ function AcJSONtoGEDCOM(acJSON) {
 	gedStr += "2 VERS 5.5" + lb;
 	gedStr += "2 FORM LINEAGE-LINKED" + lb;
 
+	// Individuals
 	for(var i = 0; i < data.individuals.length; i++) {
 		gedStr += "0 @" + data.individuals[i].id + "@ INDI" + lb;
 		gedStr += "1 NAME " + data.individuals[i].preNames + " /" + data.individuals[i].lastNames_Birth + "/" + lb;
 		gedStr += "1 SEX " + (data.individuals[i].sexId === 1 ? "M" : "F") + lb;
 
-		var birth = undefined, death = undefined;
+		var birth = undefined, baptism = undefined, death = undefined;
 		for(var j = 0; j < data.events.length; j++) {
 			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 1) {
 				birth = data.events[j];
+			}
+			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 2) {
+				baptism = data.events[j];
 			}
 			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 5) {
 				death = data.events[j];
 			}
 
-			if(birth !== undefined && death !== undefined) {
+			if(birth !== undefined && baptism !== undefined && death !== undefined) {
 				break;
 			}
 		}
@@ -215,21 +232,30 @@ function AcJSONtoGEDCOM(acJSON) {
 		if(birth !== undefined) {
 			gedStr += "1 BIRT" + lb;
 
-			if(birth.date !== undefined) {
+			if(birth.date !== undefined && birth.date.length > 0) {
 				gedStr += "2 DATE " + birth.date + lb;
 			}
-			if(birth.place !== undefined) {
+			if(birth.place !== undefined && birth.place.length > 0) {
 				gedStr += "2 PLAC " + birth.place + lb;
 			}
 		}
+		if(baptism !== undefined) {
+			gedStr += "1 CHR" + lb;
 
+			if(baptism.date !== undefined && baptism.date.length > 0) {
+				gedStr += "2 DATE " + baptism.date + lb;
+			}
+			if(baptism.place !== undefined && baptism.place.length > 0) {
+				gedStr += "2 PLAC " + baptism.place + lb;
+			}
+		}
 		if(death !== undefined) {
 			gedStr += "1 DEAT" + lb;
 
-			if(death.date !== undefined) {
+			if(death.date !== undefined && death.date.length > 0) {
 				gedStr += "2 DATE " + death.date + lb;
 			}
-			if(death.place !== undefined) {
+			if(death.place !== undefined && death.place.length > 0) {
 				gedStr += "2 PLAC " + death.place + lb;
 			}
 		}
@@ -249,6 +275,48 @@ function AcJSONtoGEDCOM(acJSON) {
 		}
 
 		gedStr += "1 _FSFTID " + data.individuals[i].familySearchOrgId + lb;
+	}
+
+	// Familien
+	for(var i = 0; i < data.families.length; i++) {
+		gedStr += "0 @" + data.families[i].id + "@ FAM" + lb;
+		gedStr += "1 HUSB @" + data.families[i].husbandId + "@" + lb;
+		gedStr += "1 WIFE @" + data.families[i].wifeId + "@" + lb;
+
+		for(var j = 0; j < data.children.length; j++) {
+			if(data.children[j].familyId === data.families[i].id) {
+				gedStr += "1 CHIL @" + data.children[j].individualId + "@" + lb;
+			}
+		}
+
+		var marriage = undefined, divore = undefined;
+		for(var j = 0; j < data.events.length; j++) {
+			if(data.events[j].familyId === data.families[i].id && data.events[j].eventTypeId === 3) {
+				marriage = data.events[j];
+			}
+			if(data.events[j].familyId === data.families[i].id && data.events[j].eventTypeId === 4) {
+				divore = data.events[j];
+			}
+
+			if(marriage !== undefined && divore !== undefined) {
+				break;
+			}
+		}
+
+		if(marriage !== undefined) {
+			gedStr += "1 MARR" + lb;
+
+			if(marriage.date !== undefined && marriage.date.length > 0) {
+				gedStr += "2 DATE " + marriage.date + lb;
+			}
+			if(marriage.place !== undefined && marriage.place.length > 0) {
+				gedStr += "2 PLAC " + marriage.place + lb;
+			}
+		}
+		
+		// Divorces are not part of the GEDCOM format
+
+		gedStr += "1 _FSFTID " + data.families[i].familySearchOrgId + lb;
 	}
 
 	gedStr += "0 TRLR" + lb;

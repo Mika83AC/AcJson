@@ -37,7 +37,7 @@ function saveAcJSONFile(acJSONData) {
 };
 function saveGEDFile(gedData) {
 	var a = document.getElementById("downloadlink_ged");
-	var data = new Blob([acJSONData], {type: 'text/plain'});
+	var data = new Blob([gedData], {type: 'text/plain'});
 
 	a.href = URL.createObjectURL(data);
 	a.innerHTML = "Download GEDCOM file here";
