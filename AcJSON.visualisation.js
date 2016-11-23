@@ -6,10 +6,10 @@ function loadFile(evt) {
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
-			dataSource = JSON.parse(e.target.result);
+			AcJSON.Vis.Sunburst.acJSONObj = JSON.parse(e.target.result);
 
 			// Basic setup of page elements.
-			initializeBreadcrumbTrail();
+			AcJSON.Vis.Sunburst.initializeBreadcrumbTrail();
 
 			startVis();
 		}
@@ -19,21 +19,21 @@ function loadFile(evt) {
 	}
 };
 function startVis() {
-	hierarchyArray = buildHierarchyArray(startIndividualId);
+	AcJSON.Vis.Sunburst.buildHierarchyArray(AcJSON.Vis.Sunburst.startIndividualId);
 
-	vis = d3.select("#chart").append("svg:svg")
-		.attr("width", width)
-		.attr("height", height)
+	AcJSON.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
+		.attr("width", AcJSON.Vis.Sunburst.width)
+		.attr("height", AcJSON.Vis.Sunburst.height)
 		.append("svg:g")
 		.attr("id", "container")
-		.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+		.attr("transform", "translate(" + AcJSON.Vis.Sunburst.width / 2 + "," + AcJSON.Vis.Sunburst.height / 2 + ")");
 
 	// Bounding circle underneath the sunburst, to make it easier to detect
 	// when the mouse leaves the parent g.
-	vis.append("svg:circle").attr("r", radius).style("opacity", 0);
+	AcJSON.Vis.Sunburst.vis.append("svg:circle").attr("r", AcJSON.Vis.Sunburst.radius).style("opacity", 0);
 
-	createVisualization(hierarchyArray);
-	setInitialData(hierarchyArray);
+	AcJSON.Vis.Sunburst.createVisualization();
+	AcJSON.Vis.Sunburst.setInitialData();
 };
 function refreshVis() {
 	var chart = document.getElementById("chart");

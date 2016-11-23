@@ -1,13 +1,14 @@
 "use strict";
 
-// Namespaces
-var AcJSON = AcJSON || {};
-AcJSON.Converter = AcJSON.Converter || {};
-AcJSON.Visualisation = AcJSON.Visualisation || {};
-AcJSON.Helper = AcJSON.Helper || {};
+// Namespaces /////////////////////////////////////////////////////////////////////////////////////////////////////////
+var ACJ = ACJ || {};
+ACJ.Conv = ACJ.Conv || {};
+ACJ.Vis = ACJ.Vis || {};
+ACJ.Vis.Sunburst = ACJ.Vis.Sunburst || {};
+ACJ.Helper = ACJ.Helper || {};
 
-// Classes for AcJSON format
-AcJSON.Individual = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+// Classes for ACJ format //////////////////////////////////////////////////////////////////////////////////////////
+ACJ.Individual = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
 	this.id = id;
 	this.preNames = preNames;
 	this.lastNames_Birth = lastNames_Birth;
@@ -16,7 +17,7 @@ AcJSON.Individual = function(id, preNames, lastNames_Birth, lastNames_Mariage, s
 	this.memo = memo;
 	this.familySearchOrgId = familySearchOrgId;     
 };
-AcJSON.Family = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+ACJ.Family = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
 	this.id = id;
 	this.preNames = preNames;
 	this.lastNames_Birth = lastNames_Birth;
@@ -25,13 +26,13 @@ AcJSON.Family = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId
 	this.memo = memo;
 	this.familySearchOrgId = familySearchOrgId;    
 };
-AcJSON.Child = function(id, individualId, familyId, memo) {
+ACJ.Child = function(id, individualId, familyId, memo) {
 	this.id = id;
 	this.individualId = individualId;
 	this.familyId = familyId;
 	this.memo = "";         
 };
-AcJSON.Event = function(id, eventTypeId, individualId, familyId, date, place, memo) {
+ACJ.Event = function(id, eventTypeId, individualId, familyId, date, place, memo) {
 	this.id = id;
 	this.eventTypeId = eventTypeId;
 	this.individualId = individualId;
@@ -40,7 +41,7 @@ AcJSON.Event = function(id, eventTypeId, individualId, familyId, date, place, me
 	this.place = place;
 	this.memo = memo;     
 };
-AcJSON.Media = function(id, mediaTypeId, individualId, familyId, path, place, memo) {
+ACJ.Media = function(id, mediaTypeId, individualId, familyId, path, place, memo) {
 	this.id = id;
 	this.mediaTypeId = 0;
 	this.individualId = individualId;
@@ -49,8 +50,8 @@ AcJSON.Media = function(id, mediaTypeId, individualId, familyId, path, place, me
 	this.memo = memo;   
 };
 
-// Converter functions
-AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
+// Converter functions ////////////////////////////////////////////////////////////////////////////////////////////
+ACJ.Conv.GEDCOMtoACJ = function(gedcomData) {
 	var lines = gedcomData.split('\n');
 	var lastCommandSection = "";
 	var lastCommandLine = "";
@@ -72,7 +73,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
-			individual = new AcJSON.Individual();
+			individual = new ACJ.Individual();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
 			if(individual.id === "I80") {
@@ -94,7 +95,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new AcJSON.Event(nextEventId++, 1, individual.id, 0, "", "", "");
+			event = new ACJ.Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
@@ -104,7 +105,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new AcJSON.Event(nextEventId++, 1, individual.id, 0, "", "", "");
+				event = new ACJ.Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -117,7 +118,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new AcJSON.Event(nextEventId++, 2, individual.id, 0, "", "", "");
+			event = new ACJ.Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
@@ -127,7 +128,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new AcJSON.Event(nextEventId++, 2, individual.id, 0, "", "", "");
+				event = new ACJ.Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -140,7 +141,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new AcJSON.Event(nextEventId++, 5, individual.id, 0, "", "", "");
+			event = new ACJ.Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
@@ -150,7 +151,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new AcJSON.Event(nextEventId++, 5, individual.id, 0, "", "", "");
+				event = new ACJ.Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -174,7 +175,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 				families.push(family);
 			}
 
-			family = new AcJSON.Family();
+			family = new ACJ.Family();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
@@ -186,7 +187,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "").replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			child = new AcJSON.Child();
+			child = new ACJ.Child();
 			child.id = nextChildId++;
 			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "").replace("@", "");
 			child.familyId = family.id;
@@ -199,7 +200,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new AcJSON.Event(nextEventId++, 3, 0, family.id, "", "", "");
+			event = new ACJ.Event(nextEventId++, 3, 0, family.id, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
@@ -209,7 +210,7 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new AcJSON.Event(nextEventId++, 3, 0, family.id, "", "", "");
+				event = new ACJ.Event(nextEventId++, 3, 0, family.id, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -242,9 +243,9 @@ AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 
 	return JSON.stringify(obj);
 };
-AcJSON.Converter.AcJSONtoGEDCOM = function(acJSONData) {
+ACJ.Conv.ACJtoGEDCOM = function(ACJData) {
 	var lb = "\r\n";
-	var data = JSON.parse(acJSONData);
+	var data = JSON.parse(ACJData);
 	var gedStr = "0 HEAD" + lb;
 	gedStr += "1 CHAR UTF-8" + lb;
 	gedStr += "1 GEDC" + lb;
@@ -381,115 +382,115 @@ AcJSON.Converter.AcJSONtoGEDCOM = function(acJSONData) {
 	return gedStr;
 };
 
-// AcJSON helper functions
-AcJSON.Helper.getIndividual = function(dataSource, individId) {
-	for(var i = 0; i < dataSource.individuals.length; i++) {
-		if(individId !== '' && dataSource.individuals[i].id === individId){
-			return dataSource.individuals[i];
+// ACJ helper functions ///////////////////////////////////////////////////////////////////////////////////////////
+ACJ.Helper.getIndividual = function(ACJ, individId) {
+	for(var i = 0; i < ACJ.individuals.length; i++) {
+		if(individId !== '' && ACJ.individuals[i].id === individId){
+			return ACJ.individuals[i];
 		}
 	}
 
 	return undefined;
 };
-AcJSON.Helper.getFamilyId = function(dataSource, indidivId, childId) {
-	for(var i = 0; i < dataSource.children.length; i++) {
-		if((indidivId !== '' && dataSource.children[i].individualId === indidivId) ||
-			(childId !== '' && dataSource.children[i].id === childId)){
-			return dataSource.children[i].familyId;
+ACJ.Helper.getFamilyId = function(ACJ, indidivId, childId) {
+	for(var i = 0; i < ACJ.children.length; i++) {
+		if((indidivId !== '' && ACJ.children[i].individualId === indidivId) ||
+			(childId !== '' && ACJ.children[i].id === childId)){
+			return ACJ.children[i].familyId;
 		}
 	}
 
 	return undefined;
 };
-AcJSON.Helper.getFamily = function(dataSource, familyId) {
-	for(var i = 0; i < dataSource.families.length; i++) {
-		if(familyId !== '' && dataSource.families[i].id === familyId){
-			return dataSource.families[i];
+ACJ.Helper.getFamily = function(ACJ, familyId) {
+	for(var i = 0; i < ACJ.families.length; i++) {
+		if(familyId !== '' && ACJ.families[i].id === familyId){
+			return ACJ.families[i];
 		}
 	}
 
 	return undefined;
 };
 
-// Visualisation functions and variables
-var dataSource = {};
-var hierarchyArray = {};
-var startIndividualId = 'I1';
+// Sunburst Visualisation functions and variables ////////////////////////////////////////////////////////////////
+ACJ.Vis.Sunburst.ACJObj = {};
+ACJ.Vis.Sunburst.hierarchyArray = {};
+ACJ.Vis.Sunburst.startIndividualId = 'I1';
 
-var width = document.body.clientWidth;
-var height = document.body.clientHeight - 60;
-var radius = Math.min(width, height) / 2.0;
+ACJ.Vis.Sunburst.width = document.body.clientWidth;
+ACJ.Vis.Sunburst.height = document.body.clientHeight - 60;
+ACJ.Vis.Sunburst.radius = Math.min(ACJ.Vis.Sunburst.width, ACJ.Vis.Sunburst.height) / 2.0;
 
-var b = { w: 150, h: 30, s: 3, t: 10 };
+ACJ.Vis.Sunburst.b = { w: 150, h: 30, s: 3, t: 10 };
 
-var totalSize = 0; 
+ACJ.Vis.Sunburst.totalSize = 0; 
 
-var vis = undefined;
-var partition = d3.layout.partition()
-	.size([2 * Math.PI, radius * radius])
+ACJ.Vis.Sunburst.vis = undefined;
+ACJ.Vis.Sunburst.partition = d3.layout.partition()
+	.size([2 * Math.PI, ACJ.Vis.Sunburst.radius * ACJ.Vis.Sunburst.radius])
 	.value(function(d) { return d.size; });
-var arc = d3.svg.arc()
+ACJ.Vis.Sunburst.arc = d3.svg.arc()
 	.startAngle(function(d) { return d.x; })
 	.endAngle(function(d) { return d.x + d.dx; })
 	.innerRadius(function(d) { return Math.sqrt(d.y); })
 	.outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
 
-function createVisualization(json) {
+ACJ.Vis.Sunburst.createVisualization = function() {
   	// For efficiency, filter nodes to keep only those large enough to see.
-  	var nodes = partition.nodes(json)
+  	var nodes = ACJ.Vis.Sunburst.partition.nodes(ACJ.Vis.Sunburst.hierarchyArray)
 	  	.filter(function(d) {
 	  		return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
 	  	});
 
-  	var path = vis.data([json]).selectAll("path")
+  	var path = ACJ.Vis.Sunburst.vis.data([ACJ.Vis.Sunburst.hierarchyArray]).selectAll("path")
 	  	.data(nodes)
 	  	.enter().append("svg:path")
 	  	.attr("display", function(d) { return d.depth ? null : "none"; })
-	  	.attr("d", arc)
+	  	.attr("d", ACJ.Vis.Sunburst.arc)
 	  	.attr("fill-rule", "evenodd")
 	  	.style("fill", function(d) { return d.color; })
 	  	.style("opacity", 1)
-	  	.on("mouseover", mouseover)
-	  	.on("click", click);
+	  	.on("mouseover", ACJ.Vis.Sunburst.mouseover)
+	  	.on("click", ACJ.Vis.Sunburst.click);
 
   	// Add the mouseleave handler to the bounding circle.
-  	d3.select("#container").on("mouseleave", mouseleave);
+  	d3.select("#container").on("mouseleave", ACJ.Vis.Sunburst.mouseleave);
 
   	var exp = document.getElementById("explanation");
   	exp.style.width = '200px';
   	exp.style.height = '200px';
-	exp.style.left = (width / 2 - 100) + 'px';
-	exp.style.top = (height / 2 - 100) + 'px';
+	exp.style.left = (ACJ.Vis.Sunburst.width / 2 - 100) + 'px';
+	exp.style.top = (ACJ.Vis.Sunburst.height / 2 - 100) + 'px';
 
 	// Get total size of the tree = value of root node from partition.
-  	totalSize = path.node().__data__.value;
+  	ACJ.Vis.Sunburst.totalSize = path.node().__data__.value;
 };
-function setInitialData(json) {
+ACJ.Vis.Sunburst.setInitialData = function() {
 	// Initial view of root data
-  	setTextForCenterInfo(json, undefined, undefined, true);
+  	ACJ.Vis.Sunburst.setTextForCenterInfo(ACJ.Vis.Sunburst.hierarchyArray, undefined, undefined, true);
 };
 
-function click(d) {
-	startIndividualId = d.data.id;
+ACJ.Vis.Sunburst.click = function(d) {
+	ACJ.Vis.Sunburst.startIndividualId = d.data.id;
 	refreshVis();
 }
-function mouseover(d) {
-	setTextForCenterInfo(d, undefined, undefined, false);
+ACJ.Vis.Sunburst.mouseover = function(d) {
+	ACJ.Vis.Sunburst.setTextForCenterInfo(d, undefined, undefined, false);
 
-  	var sequenceArray = getAncestors(d);
-  	updateBreadcrumbs(sequenceArray);
+  	var sequenceArray = ACJ.Vis.Sunburst.getAncestors(d);
+  	ACJ.Vis.Sunburst.updateBreadcrumbs(sequenceArray);
 
   	// Fade all the segments.
   	d3.selectAll("path").style("opacity", 0.3);
 
   	// Then highlight only those that are an ancestor of the current segment.
-  	vis.selectAll("path")
+  	ACJ.Vis.Sunburst.vis.selectAll("path")
 	  	.filter(function(node) {
 			return (sequenceArray.indexOf(node) >= 0);
 		})
 	  	.style("opacity", 1);
 };
-function mouseleave(d) {
+ACJ.Vis.Sunburst.mouseleave = function(d) {
   	// Hide the breadcrumb trail
   	d3.select("#trail").style("visibility", "hidden");
 
@@ -502,14 +503,14 @@ function mouseleave(d) {
 	  	.duration(250)
 	  	.style("opacity", 1)
 	  	.each("end", function() {
-			d3.select(this).on("mouseover", mouseover);
+			d3.select(this).on("mouseover", ACJ.Vis.Sunburst.mouseover);
 		});
 
   	// Revert view of root data
-  	setTextForCenterInfo(undefined, undefined, startIndividualId, true);
+  	ACJ.Vis.Sunburst.setTextForCenterInfo(undefined, undefined, ACJ.Vis.Sunburst.startIndividualId, true);
 };
 
-function getAncestors(node) {
+ACJ.Vis.Sunburst.getAncestors = function(node) {
   	var path = [];
   	var current = node;
   	while (current.parent) {
@@ -523,10 +524,10 @@ function getAncestors(node) {
   	return path;
 };
 
-function initializeBreadcrumbTrail() {
+ACJ.Vis.Sunburst.initializeBreadcrumbTrail = function() {
   	// Add the svg area.
   	var trail = d3.select("#sequence").append("svg:svg")
-	  	.attr("width", width)
+	  	.attr("width", ACJ.Vis.Sunburst.width)
 	  	.attr("height", 50)
 	  	.attr("id", "trail");
 
@@ -534,46 +535,46 @@ function initializeBreadcrumbTrail() {
 		.attr("id", "endlabel")
 		.style("fill", "#000");
 };
-function breadcrumbPoints(d, i) {
+ACJ.Vis.Sunburst.breadcrumbPoints = function(d, i) {
   	var points = [];
   	points.push("0,0");
-  	points.push(b.w + ",0");
-  	points.push(b.w + b.t + "," + (b.h / 2));
-  	points.push(b.w + "," + b.h);
-  	points.push("0," + b.h);
+  	points.push(ACJ.Vis.Sunburst.b.w + ",0");
+  	points.push(ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.t + "," + (ACJ.Vis.Sunburst.b.h / 2));
+  	points.push(ACJ.Vis.Sunburst.b.w + "," + ACJ.Vis.Sunburst.b.h);
+  	points.push("0," + ACJ.Vis.Sunburst.b.h);
   	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
-		points.push(b.t + "," + (b.h / 2));
+		points.push(ACJ.Vis.Sunburst.b.t + "," + (ACJ.Vis.Sunburst.b.h / 2));
   	}
   	return points.join(" ");
 };
-function updateBreadcrumbs(nodeArray) {
+ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
   	var g = d3.select("#trail")
 	  	.selectAll("g")
 	  	.data(nodeArray, function(d) { 
-	  		return getTextForBreadcrumb(d, undefined, undefined); 
+	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined); 
 	  	});
 
   	// Add breadcrumb and label for entering nodes.
   	var entering = g.enter().append("svg:g");
 
   	entering.append("svg:polygon")
-	  	.attr("points", breadcrumbPoints)
+	  	.attr("points", ACJ.Vis.Sunburst.breadcrumbPoints)
 	  	.style("fill", function(d) { 
 	  		return d.color; 
 	  	});
 
   	entering.append("svg:text")
-	  	.attr("x", (b.w + b.t) / 2)
-	  	.attr("y", b.h / 2)
+	  	.attr("x", (ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.t) / 2)
+	  	.attr("y", ACJ.Vis.Sunburst.b.h / 2)
 	  	.attr("dy", "0.35em")
 	  	.attr("text-anchor", "middle")
 	  	.text(function(d) { 
-	  		return getTextForBreadcrumb(d, undefined, undefined); 
+	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined); 
 	  	});
 
   	// Set position for entering and updating nodes.
   	g.attr("transform", function(d, i) {
-		return "translate(" + i * (b.w + b.s) + ", 0)";
+		return "translate(" + i * (ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.s) + ", 0)";
   	});
 
   	// Remove exiting nodes.
@@ -583,26 +584,26 @@ function updateBreadcrumbs(nodeArray) {
   	d3.select("#trail").style("visibility", "");
 };
 
-// Visualisation helper functions
-function buildHierarchyArray(startIndividualId) {
-	var indiv = getIndividual(dataSource, startIndividualId);
+// Sunburst Visualisation helper functions ////////////////////////////////////////////////////////////////////
+ACJ.Vis.Sunburst.buildHierarchyArray = function(startIndividualId) {
+	var indiv = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, startIndividualId);
 	var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
 	indivNode.data = indiv;
 
-	getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
+	ACJ.Vis.Sunburst.getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
 
-	return indivNode;
+	ACJ.Vis.Sunburst.hierarchyArray = indivNode;
 };
-function getChildNodes(indiv, indivNode, size, first, parentColor) {
-	var famId = getFamilyId(dataSource, indiv.id);
+ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentColor) {
+	var famId = ACJ.Helper.getFamilyId(ACJ.Vis.Sunburst.ACJObj, indiv.id);
 	if(famId === undefined) {
 		return undefined;
 	}
 
-	var fam = getFamily(dataSource, famId);
+	var fam = ACJ.Helper.getFamily(ACJ.Vis.Sunburst.ACJObj, famId);
 	if(fam !== undefined) {
-		var mother = getIndividual(dataSource, fam.wifeId);
-		var father = getIndividual(dataSource, fam.husbandId);
+		var mother = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, fam.wifeId);
+		var father = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, fam.husbandId);
 
 		if(mother !== undefined) {
 			var color = first ? "#490000" : (function(c) { 
@@ -611,7 +612,7 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 			})(parentColor);
 			var newNode = {"data": {}, "children": [], "size": size, "color": color}
 			newNode.data = mother;
-			getChildNodes(mother, newNode, size / 2, false, color);
+			ACJ.Vis.Sunburst.getChildNodes(mother, newNode, size / 2, false, color);
 			indivNode.children.push(newNode);
 		}
 		if(father !== undefined) {
@@ -621,7 +622,7 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 			})(parentColor);
 			var newNode = {"data": {}, "children": [], "size": size, "color": color}
 			newNode.data = father;
-			getChildNodes(father, newNode, size / 2, false, color);
+			ACJ.Vis.Sunburst.getChildNodes(father, newNode, size / 2, false, color);
 			indivNode.children.push(newNode);
 		}
 	} 
@@ -629,7 +630,7 @@ function getChildNodes(indiv, indivNode, size, first, parentColor) {
 	return indivNode;
 }
 
-function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
+ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChildLinks) {
 	var individual = undefined;
 
 	// Individual ermitteln
@@ -640,9 +641,9 @@ function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
 		individual = indiv;
 	}
 	else if(indivId !== undefined) {
-		for(var i = 0; i < dataSource.individuals.length; i++) {
-			if(dataSource.individuals[i].id === indivId) {
-				individual = dataSource.individuals[i];
+		for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.individuals.length; i++) {
+			if(ACJ.Vis.Sunburst.ACJObj.individuals[i].id === indivId) {
+				individual = ACJ.Vis.Sunburst.ACJObj.individuals[i];
 			}
 		}
 	}
@@ -655,9 +656,9 @@ function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
 
 	// Events dieser Person ermitteln
 	var individualEvents = [];
-	for(var i = 0; i < dataSource.events.length; i++) {
-		if(dataSource.events[i].individualId === individual.id) {
-			individualEvents.push(dataSource.events[i]);
+	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.events.length; i++) {
+		if(ACJ.Vis.Sunburst.ACJObj.events[i].individualId === individual.id) {
+			individualEvents.push(ACJ.Vis.Sunburst.ACJObj.events[i]);
 		}
 	}
 
@@ -675,12 +676,12 @@ function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
 	document.getElementById("dates").innerHTML = birth.substring(birth.length - 4) + ' - ' + death.substring(death.length - 4);
 
 	// Links zu Kindern setzen
-	removeChildLinks();
+	ACJ.Vis.Sunburst.removeChildLinks();
 	if(createChildLinks) {
-		findAndSetChildLinks(individual.id);
+		ACJ.Vis.Sunburst.findAndSetChildLinks(individual.id);
 	}
 };
-function getTextForBreadcrumb(d3d, indiv, indivId) {
+ACJ.Vis.Sunburst.getTextForBreadcrumb = function(d3d, indiv, indivId) {
 	var individual = undefined;
 
 	if(d3d !== undefined) {
@@ -690,9 +691,9 @@ function getTextForBreadcrumb(d3d, indiv, indivId) {
 		individual = indiv;
 	}
 	else if(indivId !== undefined) {
-		for(var i = 0; i < dataSource.individuals.length; i++) {
-			if(dataSource.individuals[i].id === indivId) {
-				individual = dataSource.individuals[i];
+		for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.individuals.length; i++) {
+			if(ACJ.Vis.Sunburst.ACJObj.individuals[i].id === indivId) {
+				individual = ACJ.Vis.Sunburst.ACJObj.individuals[i];
 			}
 		}
 	}
@@ -708,7 +709,7 @@ function getTextForBreadcrumb(d3d, indiv, indivId) {
 	return individual.preNames + ' ' + individual.lastNames_Birth;
 };
 
-function removeChildLinks() {
+ACJ.Vis.Sunburst.removeChildLinks = function() {
 	var cont = document.getElementById('explanation');
 	var links = document.getElementsByClassName('uplink');
 
@@ -716,11 +717,11 @@ function removeChildLinks() {
 	   links[0].parentNode.removeChild(links[0]);
 	}
 }
-function findAndSetChildLinks(parentId) {
+ACJ.Vis.Sunburst.findAndSetChildLinks = function(parentId) {
 	var family = undefined;
-	for(var i = 0; i < dataSource.families.length; i++) {
-		if(dataSource.families[i].husbandId === parentId || dataSource.families[i].wifeId === parentId) {
-			family = dataSource.families[i];
+	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.families.length; i++) {
+		if(ACJ.Vis.Sunburst.ACJObj.families[i].husbandId === parentId || ACJ.Vis.Sunburst.ACJObj.families[i].wifeId === parentId) {
+			family = ACJ.Vis.Sunburst.ACJObj.families[i];
 		}
 	}
 
@@ -729,9 +730,9 @@ function findAndSetChildLinks(parentId) {
 	}
 
 	var children = [];
-	for(var i = 0; i < dataSource.children.length; i++) {
-		if(dataSource.children[i].familyId === family.id) {
-			children.push(dataSource.children[i]);
+	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.children.length; i++) {
+		if(ACJ.Vis.Sunburst.ACJObj.children[i].familyId === family.id) {
+			children.push(ACJ.Vis.Sunburst.ACJObj.children[i]);
 		}
 	}
 
@@ -742,20 +743,20 @@ function findAndSetChildLinks(parentId) {
 			var a = document.createElement('a');
 			a.id = children[i].individualId;
 			a.href = '#';
-			a.innerHTML = 'Gehe zu ' + getTextForBreadcrumb(undefined, undefined, children[i].individualId);
+			a.innerHTML = 'Gehe zu ' + ACJ.Vis.Sunburst.getTextForBreadcrumb(undefined, undefined, children[i].individualId);
 			a.className = 'uplink';
-			a.addEventListener('click', setChildAsRoot, false);
+			a.addEventListener('click', ACJ.Vis.Sunburst.setChildAsRoot, false);
 
 			cont.appendChild(a);
 		}
 	}
 };
-function setChildAsRoot(e) {
-	startIndividualId = e.currentTarget.id;
+ACJ.Vis.Sunburst.setChildAsRoot = function(e) {
+	ACJ.Vis.Sunburst.startIndividualId = e.currentTarget.id;
 	refreshVis();
 };
 
-// String helper functions
+// String helper functions ///////////////////////////////////////////////////////////////////////////
 function pad(value, length) {
 	return (value.toString().length < length) ? pad("0"+value, length):value;
 };
@@ -770,7 +771,7 @@ function countOfCharInStr(str, searchChar) {
 	return count;
 };
 
-// Color helper functions
+// Color helper functions //////////////////////////////////////////////////////////////////////////
 function hexToR(h) {
 	return parseInt((cutHex(h)).substring(0,2),16);
 };
