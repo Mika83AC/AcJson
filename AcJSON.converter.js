@@ -6,7 +6,7 @@ function onSelectFile_ged(evt) {
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
-			var acJSONData = AcJSON.Converter.GEDCOMtoAcJSON(e.target.result);
+			var acJSONData = ACJ.Conv.GEDCOMtoACJSON(e.target.result);
 			saveAcJSONFile(acJSONData);
 		}
 		r.readAsText(file);
@@ -20,7 +20,7 @@ function onSelectFile_json(evt) {
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
-			var gedData = AcJSON.Converter.AcJSONtoGEDCOM(e.target.result);
+			var gedData = ACJ.Conv.ACJSONtoGEDCOM(e.target.result);
 			saveGEDFile(gedData);
 		}
 		r.readAsText(file);

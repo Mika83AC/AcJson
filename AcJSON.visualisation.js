@@ -6,10 +6,10 @@ function loadFile(evt) {
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) { 
-			AcJSON.Vis.Sunburst.acJSONObj = JSON.parse(e.target.result);
+			ACJ.Vis.Sunburst.acJSONObj = JSON.parse(e.target.result);
 
 			// Basic setup of page elements.
-			AcJSON.Vis.Sunburst.initializeBreadcrumbTrail();
+			ACJ.Vis.Sunburst.initializeBreadcrumbTrail();
 
 			startVis();
 		}
@@ -19,21 +19,21 @@ function loadFile(evt) {
 	}
 };
 function startVis() {
-	AcJSON.Vis.Sunburst.buildHierarchyArray(AcJSON.Vis.Sunburst.startIndividualId);
+	ACJ.Vis.Sunburst.buildHierarchyArray(ACJ.Vis.Sunburst.startIndividualId);
 
-	AcJSON.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
-		.attr("width", AcJSON.Vis.Sunburst.width)
-		.attr("height", AcJSON.Vis.Sunburst.height)
+	ACJ.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
+		.attr("width", ACJ.Vis.Sunburst.width)
+		.attr("height", ACJ.Vis.Sunburst.height)
 		.append("svg:g")
 		.attr("id", "container")
-		.attr("transform", "translate(" + AcJSON.Vis.Sunburst.width / 2 + "," + AcJSON.Vis.Sunburst.height / 2 + ")");
+		.attr("transform", "translate(" + ACJ.Vis.Sunburst.width / 2 + "," + ACJ.Vis.Sunburst.height / 2 + ")");
 
 	// Bounding circle underneath the sunburst, to make it easier to detect
 	// when the mouse leaves the parent g.
-	AcJSON.Vis.Sunburst.vis.append("svg:circle").attr("r", AcJSON.Vis.Sunburst.radius).style("opacity", 0);
+	ACJ.Vis.Sunburst.vis.append("svg:circle").attr("r", ACJ.Vis.Sunburst.radius).style("opacity", 0);
 
-	AcJSON.Vis.Sunburst.createVisualization();
-	AcJSON.Vis.Sunburst.setInitialData();
+	ACJ.Vis.Sunburst.createVisualization();
+	ACJ.Vis.Sunburst.setInitialData();
 };
 function refreshVis() {
 	var chart = document.getElementById("chart");

@@ -51,7 +51,7 @@ ACJ.Media = function(id, mediaTypeId, individualId, familyId, path, place, memo)
 };
 
 // Converter functions ////////////////////////////////////////////////////////////////////////////////////////////
-ACJ.Conv.GEDCOMtoACJ = function(gedcomData) {
+ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 	var lines = gedcomData.split('\n');
 	var lastCommandSection = "";
 	var lastCommandLine = "";
@@ -243,9 +243,9 @@ ACJ.Conv.GEDCOMtoACJ = function(gedcomData) {
 
 	return JSON.stringify(obj);
 };
-ACJ.Conv.ACJtoGEDCOM = function(ACJData) {
+ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 	var lb = "\r\n";
-	var data = JSON.parse(ACJData);
+	var data = JSON.parse(acJSONObj);
 	var gedStr = "0 HEAD" + lb;
 	gedStr += "1 CHAR UTF-8" + lb;
 	gedStr += "1 GEDC" + lb;
@@ -383,29 +383,29 @@ ACJ.Conv.ACJtoGEDCOM = function(ACJData) {
 };
 
 // ACJ helper functions ///////////////////////////////////////////////////////////////////////////////////////////
-ACJ.Helper.getIndividual = function(ACJ, individId) {
-	for(var i = 0; i < ACJ.individuals.length; i++) {
-		if(individId !== '' && ACJ.individuals[i].id === individId){
-			return ACJ.individuals[i];
+ACJ.Helper.getIndividual = function(acJSONObj, individId) {
+	for(var i = 0; i < acJSONObj.individuals.length; i++) {
+		if(individId !== '' && acJSONObj.individuals[i].id === individId){
+			return acJSONObj.individuals[i];
 		}
 	}
 
 	return undefined;
 };
-ACJ.Helper.getFamilyId = function(ACJ, indidivId, childId) {
-	for(var i = 0; i < ACJ.children.length; i++) {
-		if((indidivId !== '' && ACJ.children[i].individualId === indidivId) ||
-			(childId !== '' && ACJ.children[i].id === childId)){
-			return ACJ.children[i].familyId;
+ACJ.Helper.getFamilyId = function(acJSONObj, indidivId, childId) {
+	for(var i = 0; i < acJSONObj.children.length; i++) {
+		if((indidivId !== '' && acJSONObj.children[i].individualId === indidivId) ||
+			(childId !== '' && acJSONObj.children[i].id === childId)){
+			return acJSONObj.children[i].familyId;
 		}
 	}
 
 	return undefined;
 };
-ACJ.Helper.getFamily = function(ACJ, familyId) {
-	for(var i = 0; i < ACJ.families.length; i++) {
-		if(familyId !== '' && ACJ.families[i].id === familyId){
-			return ACJ.families[i];
+ACJ.Helper.getFamily = function(acJSONObj, familyId) {
+	for(var i = 0; i < acJSONObj.families.length; i++) {
+		if(familyId !== '' && acJSONObj.families[i].id === familyId){
+			return acJSONObj.families[i];
 		}
 	}
 
@@ -413,7 +413,7 @@ ACJ.Helper.getFamily = function(ACJ, familyId) {
 };
 
 // Sunburst Visualisation functions and variables ////////////////////////////////////////////////////////////////
-ACJ.Vis.Sunburst.ACJObj = {};
+ACJ.Vis.Sunburst.acJSONObj = {};
 ACJ.Vis.Sunburst.hierarchyArray = {};
 ACJ.Vis.Sunburst.startIndividualId = 'I1';
 
@@ -586,7 +586,7 @@ ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
 
 // Sunburst Visualisation helper functions ////////////////////////////////////////////////////////////////////
 ACJ.Vis.Sunburst.buildHierarchyArray = function(startIndividualId) {
-	var indiv = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, startIndividualId);
+	var indiv = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, startIndividualId);
 	var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
 	indivNode.data = indiv;
 
@@ -595,15 +595,15 @@ ACJ.Vis.Sunburst.buildHierarchyArray = function(startIndividualId) {
 	ACJ.Vis.Sunburst.hierarchyArray = indivNode;
 };
 ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentColor) {
-	var famId = ACJ.Helper.getFamilyId(ACJ.Vis.Sunburst.ACJObj, indiv.id);
+	var famId = ACJ.Helper.getFamilyId(ACJ.Vis.Sunburst.acJSONObj, indiv.id);
 	if(famId === undefined) {
 		return undefined;
 	}
 
-	var fam = ACJ.Helper.getFamily(ACJ.Vis.Sunburst.ACJObj, famId);
+	var fam = ACJ.Helper.getFamily(ACJ.Vis.Sunburst.acJSONObj, famId);
 	if(fam !== undefined) {
-		var mother = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, fam.wifeId);
-		var father = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.ACJObj, fam.husbandId);
+		var mother = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, fam.wifeId);
+		var father = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, fam.husbandId);
 
 		if(mother !== undefined) {
 			var color = first ? "#490000" : (function(c) { 
@@ -641,9 +641,9 @@ ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChil
 		individual = indiv;
 	}
 	else if(indivId !== undefined) {
-		for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.individuals.length; i++) {
-			if(ACJ.Vis.Sunburst.ACJObj.individuals[i].id === indivId) {
-				individual = ACJ.Vis.Sunburst.ACJObj.individuals[i];
+		for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.individuals.length; i++) {
+			if(ACJ.Vis.Sunburst.acJSONObj.individuals[i].id === indivId) {
+				individual = ACJ.Vis.Sunburst.acJSONObj.individuals[i];
 			}
 		}
 	}
@@ -656,9 +656,9 @@ ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChil
 
 	// Events dieser Person ermitteln
 	var individualEvents = [];
-	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.events.length; i++) {
-		if(ACJ.Vis.Sunburst.ACJObj.events[i].individualId === individual.id) {
-			individualEvents.push(ACJ.Vis.Sunburst.ACJObj.events[i]);
+	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.events.length; i++) {
+		if(ACJ.Vis.Sunburst.acJSONObj.events[i].individualId === individual.id) {
+			individualEvents.push(ACJ.Vis.Sunburst.acJSONObj.events[i]);
 		}
 	}
 
@@ -691,9 +691,9 @@ ACJ.Vis.Sunburst.getTextForBreadcrumb = function(d3d, indiv, indivId) {
 		individual = indiv;
 	}
 	else if(indivId !== undefined) {
-		for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.individuals.length; i++) {
-			if(ACJ.Vis.Sunburst.ACJObj.individuals[i].id === indivId) {
-				individual = ACJ.Vis.Sunburst.ACJObj.individuals[i];
+		for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.individuals.length; i++) {
+			if(ACJ.Vis.Sunburst.acJSONObj.individuals[i].id === indivId) {
+				individual = ACJ.Vis.Sunburst.acJSONObj.individuals[i];
 			}
 		}
 	}
@@ -719,9 +719,9 @@ ACJ.Vis.Sunburst.removeChildLinks = function() {
 }
 ACJ.Vis.Sunburst.findAndSetChildLinks = function(parentId) {
 	var family = undefined;
-	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.families.length; i++) {
-		if(ACJ.Vis.Sunburst.ACJObj.families[i].husbandId === parentId || ACJ.Vis.Sunburst.ACJObj.families[i].wifeId === parentId) {
-			family = ACJ.Vis.Sunburst.ACJObj.families[i];
+	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.families.length; i++) {
+		if(ACJ.Vis.Sunburst.acJSONObj.families[i].husbandId === parentId || ACJ.Vis.Sunburst.acJSONObj.families[i].wifeId === parentId) {
+			family = ACJ.Vis.Sunburst.acJSONObj.families[i];
 		}
 	}
 
@@ -730,9 +730,9 @@ ACJ.Vis.Sunburst.findAndSetChildLinks = function(parentId) {
 	}
 
 	var children = [];
-	for(var i = 0; i < ACJ.Vis.Sunburst.ACJObj.children.length; i++) {
-		if(ACJ.Vis.Sunburst.ACJObj.children[i].familyId === family.id) {
-			children.push(ACJ.Vis.Sunburst.ACJObj.children[i]);
+	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.children.length; i++) {
+		if(ACJ.Vis.Sunburst.acJSONObj.children[i].familyId === family.id) {
+			children.push(ACJ.Vis.Sunburst.acJSONObj.children[i]);
 		}
 	}
 
