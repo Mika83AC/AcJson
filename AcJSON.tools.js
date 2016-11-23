@@ -1,60 +1,56 @@
 "use strict";
 
+// Namespaces
+var AcJSON = AcJSON || {};
+AcJSON.Converter = AcJSON.Converter || {};
+AcJSON.Visualisation = AcJSON.Visualisation || {};
+AcJSON.Helper = AcJSON.Helper || {};
+
 // Classes for AcJSON format
-class Individual {
-	constructor(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
-		this.id = id;
-		this.preNames = preNames;
-		this.lastNames_Birth = lastNames_Birth;
-		this.lastNames_Mariage = lastNames_Mariage;
-		this.sexId = sexId;
-		this.memo = memo;
-		this.familySearchOrgId = familySearchOrgId;
-		}       
+AcJSON.Individual = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+	this.id = id;
+	this.preNames = preNames;
+	this.lastNames_Birth = lastNames_Birth;
+	this.lastNames_Mariage = lastNames_Mariage;
+	this.sexId = sexId;
+	this.memo = memo;
+	this.familySearchOrgId = familySearchOrgId;     
 };
-class Family {
-	constructor(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
-		this.id = id;
-		this.preNames = preNames;
-		this.lastNames_Birth = lastNames_Birth;
-		this.lastNames_Mariage = lastNames_Mariage;
-		this.sexId = sexId;
-		this.memo = memo;
-		this.familySearchOrgId = familySearchOrgId;
-		}       
+AcJSON.Family = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
+	this.id = id;
+	this.preNames = preNames;
+	this.lastNames_Birth = lastNames_Birth;
+	this.lastNames_Mariage = lastNames_Mariage;
+	this.sexId = sexId;
+	this.memo = memo;
+	this.familySearchOrgId = familySearchOrgId;    
 };
-class Child {
-	constructor(id, individualId, familyId, memo) {
-		this.id = id;
-		this.individualId = individualId;
-		this.familyId = familyId;
-		this.memo = "";
-		}           
+AcJSON.Child = function(id, individualId, familyId, memo) {
+	this.id = id;
+	this.individualId = individualId;
+	this.familyId = familyId;
+	this.memo = "";         
 };
-class Event {
-	constructor(id, eventTypeId, individualId, familyId, date, place, memo) {
-		this.id = id;
-		this.eventTypeId = eventTypeId;
-		this.individualId = individualId;
-		this.familyId = familyId;
-		this.date = date;
-		this.place = place;
-		this.memo = memo;
-		}       
+AcJSON.Event = function(id, eventTypeId, individualId, familyId, date, place, memo) {
+	this.id = id;
+	this.eventTypeId = eventTypeId;
+	this.individualId = individualId;
+	this.familyId = familyId;
+	this.date = date;
+	this.place = place;
+	this.memo = memo;     
 };
-class Media {
-	constructor(id, mediaTypeId, individualId, familyId, path, place, memo) {
-		this.id = id;
-		this.mediaTypeId = 0;
-		this.individualId = individualId;
-		this.familyId = familyId;
-		this.path = path;
-		this.memo = memo;
-		}       
+AcJSON.Media = function(id, mediaTypeId, individualId, familyId, path, place, memo) {
+	this.id = id;
+	this.mediaTypeId = 0;
+	this.individualId = individualId;
+	this.familyId = familyId;
+	this.path = path;
+	this.memo = memo;   
 };
 
 // Converter functions
-function GEDCOMtoAcJSON(gedcomData) {
+AcJSON.Converter.GEDCOMtoAcJSON = function(gedcomData) {
 	var lines = gedcomData.split('\n');
 	var lastCommandSection = "";
 	var lastCommandLine = "";
@@ -76,7 +72,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
-			individual = new Individual();
+			individual = new AcJSON.Individual();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
 			if(individual.id === "I80") {
@@ -98,7 +94,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 				event = undefined;
 			}
 
-			event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
+			event = new AcJSON.Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
@@ -108,7 +104,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 					event = undefined;
 				}
 
-				event = new Event(nextEventId++, 1, individual.id, 0, "", "", "");
+				event = new AcJSON.Event(nextEventId++, 1, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -121,7 +117,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 				event = undefined;
 			}
 
-			event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
+			event = new AcJSON.Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
@@ -131,7 +127,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 					event = undefined;
 				}
 
-				event = new Event(nextEventId++, 2, individual.id, 0, "", "", "");
+				event = new AcJSON.Event(nextEventId++, 2, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -144,7 +140,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 				event = undefined;
 			}
 
-			event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
+			event = new AcJSON.Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
@@ -154,7 +150,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 					event = undefined;
 				}
 
-				event = new Event(nextEventId++, 5, individual.id, 0, "", "", "");
+				event = new AcJSON.Event(nextEventId++, 5, individual.id, 0, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -178,7 +174,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 				families.push(family);
 			}
 
-			family = new Family();
+			family = new AcJSON.Family();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
@@ -190,7 +186,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "").replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			child = new Child();
+			child = new AcJSON.Child();
 			child.id = nextChildId++;
 			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "").replace("@", "");
 			child.familyId = family.id;
@@ -203,7 +199,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 				event = undefined;
 			}
 
-			event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
+			event = new AcJSON.Event(nextEventId++, 3, 0, family.id, "", "", "");
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
@@ -213,7 +209,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 					event = undefined;
 				}
 
-				event = new Event(nextEventId++, 3, 0, family.id, "", "", "");
+				event = new AcJSON.Event(nextEventId++, 3, 0, family.id, "", "", "");
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -246,7 +242,7 @@ function GEDCOMtoAcJSON(gedcomData) {
 
 	return JSON.stringify(obj);
 };
-function AcJSONtoGEDCOM(acJSONData) {
+AcJSON.Converter.AcJSONtoGEDCOM = function(acJSONData) {
 	var lb = "\r\n";
 	var data = JSON.parse(acJSONData);
 	var gedStr = "0 HEAD" + lb;
@@ -386,7 +382,7 @@ function AcJSONtoGEDCOM(acJSONData) {
 };
 
 // AcJSON helper functions
-function getIndividual(dataSource, individId) {
+AcJSON.Helper.getIndividual = function(dataSource, individId) {
 	for(var i = 0; i < dataSource.individuals.length; i++) {
 		if(individId !== '' && dataSource.individuals[i].id === individId){
 			return dataSource.individuals[i];
@@ -395,7 +391,7 @@ function getIndividual(dataSource, individId) {
 
 	return undefined;
 };
-function getFamilyId(dataSource, indidivId, childId) {
+AcJSON.Helper.getFamilyId = function(dataSource, indidivId, childId) {
 	for(var i = 0; i < dataSource.children.length; i++) {
 		if((indidivId !== '' && dataSource.children[i].individualId === indidivId) ||
 			(childId !== '' && dataSource.children[i].id === childId)){
@@ -405,7 +401,7 @@ function getFamilyId(dataSource, indidivId, childId) {
 
 	return undefined;
 };
-function getFamily(dataSource, familyId) {
+AcJSON.Helper.getFamily = function(dataSource, familyId) {
 	for(var i = 0; i < dataSource.families.length; i++) {
 		if(familyId !== '' && dataSource.families[i].id === familyId){
 			return dataSource.families[i];
