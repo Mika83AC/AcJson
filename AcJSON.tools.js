@@ -5,6 +5,7 @@ var ACJ = ACJ || {};
 ACJ.Conv = ACJ.Conv || {};
 ACJ.Vis = ACJ.Vis || {};
 ACJ.Vis.Sunburst = ACJ.Vis.Sunburst || {};
+ACJ.Vis.Triangle = ACJ.Vis.Triangle || {};
 ACJ.Helper = ACJ.Helper || {};
 
 // Classes for ACJ format //////////////////////////////////////////////////////////////////////////////////////////
@@ -510,20 +511,6 @@ ACJ.Vis.Sunburst.mouseleave = function(d) {
   	ACJ.Vis.Sunburst.setTextForCenterInfo(undefined, undefined, ACJ.Vis.Sunburst.startIndividualId, true);
 };
 
-ACJ.Vis.Sunburst.getAncestors = function(node) {
-  	var path = [];
-  	var current = node;
-  	while (current.parent) {
-		path.unshift(current);
-		current = current.parent;
-  	}
-
-  	// And once again, because root should be always the first breadcrumb node
-  	path.unshift(current);
-
-  	return path;
-};
-
 ACJ.Vis.Sunburst.initializeBreadcrumbTrail = function() {
   	// Add the svg area.
   	var trail = d3.select("#sequence").append("svg:svg")
@@ -629,6 +616,19 @@ ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentC
 
 	return indivNode;
 }
+ACJ.Vis.Sunburst.getAncestors = function(node) {
+  	var path = [];
+  	var current = node;
+  	while (current.parent) {
+		path.unshift(current);
+		current = current.parent;
+  	}
+
+  	// And once again, because root should be always the first breadcrumb node
+  	path.unshift(current);
+
+  	return path;
+};
 
 ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChildLinks) {
 	var individual = undefined;
@@ -755,6 +755,123 @@ ACJ.Vis.Sunburst.setChildAsRoot = function(e) {
 	ACJ.Vis.Sunburst.startIndividualId = e.currentTarget.id;
 	refreshVis();
 };
+
+// Triangle visualisation functions //////////////////////////////////////////////////////////////////
+ACJ.Vis.Triangle.acJSONObj = {};
+ACJ.Vis.Triangle.startIndividualId = 'I1';
+
+ACJ.Vis.Triangle.width = document.body.clientWidth;
+ACJ.Vis.Triangle.height = document.body.clientHeight - 50;
+ACJ.Vis.Triangle.widthUnit = ACJ.Vis.Triangle.width / 1000;
+ACJ.Vis.Triangle.heightUnit = ACJ.Vis.Triangle.height / 1000;
+
+ACJ.Vis.Triangle.vis = undefined;
+
+ACJ.Vis.Triangle.createVisualization = function() {
+	ACJ.Vis.Triangle.vis = d3.select("#chart").append("svg")
+		.attr("width", ACJ.Vis.Triangle.width)
+		.attr("height", ACJ.Vis.Triangle.height);
+
+	var arrayOfPolygons =  [
+		{
+			"name": "father",
+			"color": "#228800", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
+		},{
+			"name": "father_parents",
+			"color": "#228800", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*138), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
+		},{
+			"name": "father_siblings",
+			"color": "#228800", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*120), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
+		},{
+			"name": "mother",
+			"color": "#990022", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
+		},{
+			"name": "mother_parents",
+			"color": "#990022", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*862), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
+		},{
+			"name": "mother_siblings",
+			"color": "#990022", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*880), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
+		},{
+			"name": "indivividual",
+			"color": "#006699", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
+		},{
+			"name": "indivividual_brothers",
+			"color": "#006699", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*410), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
+		},{
+			"name": "indivividual_sisters",
+			"color": "#006699", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*590), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
+		},{
+			"name": "indivividual_children",
+			"color": "black", 
+			"points":[
+				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*850)}]
+		}
+	];
+
+	ACJ.Vis.Triangle.vis.selectAll("svg")
+		.data(arrayOfPolygons)
+		.enter().append("polygon")
+		.attr("points", function(d) { 
+			return d.points.map(function(d) { return [d.x,d.y].join(","); }).join(" ");})
+		.attr("id", function(d) { return d.name; })
+		.attr("fill", function(d){ return d.color; })
+		.attr("stroke", "#fff")
+		.attr("stroke-width", 2);
+
+	ACJ.Vis.Triangle.vis.selectAll("svg")
+		.data(arrayOfPolygons)
+		.enter().append("text")
+		.attr("x", function(d) { return d.points[0].x; })
+		.attr("y", function(d){ return d.points[0].y; })
+		.text(function(d){ return d.name; });
+}
 
 // String helper functions ///////////////////////////////////////////////////////////////////////////
 function pad(value, length) {

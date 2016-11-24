@@ -1,5 +1,7 @@
 "use strict";
 
+var currentVisType = 'sunburst';
+
 function loadFile(evt) {
 	var file = evt.target.files[0]; 
 
@@ -19,27 +21,36 @@ function loadFile(evt) {
 	}
 };
 function startVis() {
-	ACJ.Vis.Sunburst.buildHierarchyArray(ACJ.Vis.Sunburst.startIndividualId);
+	if(currentVisType === 'sunburst') {
+		ACJ.Vis.Sunburst.buildHierarchyArray(ACJ.Vis.Sunburst.startIndividualId);
 
-	ACJ.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
-		.attr("width", ACJ.Vis.Sunburst.width)
-		.attr("height", ACJ.Vis.Sunburst.height)
-		.append("svg:g")
-		.attr("id", "container")
-		.attr("transform", "translate(" + ACJ.Vis.Sunburst.width / 2 + "," + ACJ.Vis.Sunburst.height / 2 + ")");
+		ACJ.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
+			.attr("width", ACJ.Vis.Sunburst.width)
+			.attr("height", ACJ.Vis.Sunburst.height)
+			.append("svg:g")
+			.attr("id", "container")
+			.attr("transform", "translate(" + ACJ.Vis.Sunburst.width / 2 + "," + ACJ.Vis.Sunburst.height / 2 + ")");
 
-	// Bounding circle underneath the sunburst, to make it easier to detect
-	// when the mouse leaves the parent g.
-	ACJ.Vis.Sunburst.vis.append("svg:circle").attr("r", ACJ.Vis.Sunburst.radius).style("opacity", 0);
+		ACJ.Vis.Sunburst.vis.append("svg:circle").attr("r", ACJ.Vis.Sunburst.radius).style("opacity", 0);
 
-	ACJ.Vis.Sunburst.createVisualization();
-	ACJ.Vis.Sunburst.setInitialData();
+		ACJ.Vis.Sunburst.createVisualization();
+		ACJ.Vis.Sunburst.setInitialData();
+	}
+	else if(currentVisType === 'triangle') {
+		ACJ.Vis.Triangle.createVisualization();
+		ACJ.Vis.Triangle.setInitialData();
+	}
+};
+
+function visChanged(evt) {
+	currentVisType = evt.currentTarget.value;
 };
 function refreshVis() {
 	var chart = document.getElementById("chart");
 	chart.removeChild(chart.lastChild);
 
 	startVis();
-}
+};
 
 window.document.getElementById('fileinput').addEventListener('change', loadFile, false);
+window.document.getElementById('vistype').addEventListener('change', visChanged, false);

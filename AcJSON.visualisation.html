@@ -8,12 +8,18 @@
  	 </head>
   	<body>
     	<div id="main">
+    		<label>Choose visualisation type: </label>
+    		<select id="vistype">
+    			<option value="sunburst">Sunburst</option>
+    			<option value="triangle">Triangle</option>	
+			</select>
+			<label>Choose AcJSON file: </label>
     		<input type="file" id="fileinput" accept=".json"/>
-      	<div id="sequence"></div>
-      	<div id="chart">
+      		<div id="sequence"></div>
+      		<div id="chart">
 	     		<div id="explanation">
 	     			<span id="name"></span>
-	       		<span id="dates"></span>
+	       			<span id="dates"></span>
 	     		</div>
      		</div>
     	</div>
