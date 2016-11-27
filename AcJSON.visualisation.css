@@ -58,3 +58,9 @@ body {
   font-size: 1em;
   width: 100%;
 }
+
+.triangle_text {
+  position: absolute;
+  border: 1px 1px 1px 1px;
+  border-color: #000;
+}

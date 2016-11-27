@@ -776,6 +776,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		{
 			"name": "father",
 			"color": "#228800", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
@@ -784,6 +786,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "father_parents",
 			"color": "#228800", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*138), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
@@ -792,6 +796,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "father_siblings",
 			"color": "#228800", 
+			"text_width": 340,
+			"text_rot" : 45, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*120), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
@@ -800,6 +806,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "mother",
 			"color": "#990022", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
@@ -808,6 +816,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "mother_parents",
 			"color": "#990022", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*862), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
@@ -816,6 +826,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "mother_siblings",
 			"color": "#990022", 
+			"text_width": 340,
+			"text_rot" : 315, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*880), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
@@ -824,6 +836,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "indivividual",
 			"color": "#006699", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
@@ -832,6 +846,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "indivividual_brothers",
 			"color": "#006699", 
+			"text_width": 340,
+			"text_rot" : 45, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
@@ -840,6 +856,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "indivividual_sisters",
 			"color": "#006699", 
+			"text_width": 340,
+			"text_rot" : 315, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
@@ -848,6 +866,8 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		},{
 			"name": "indivividual_children",
 			"color": "black", 
+			"text_width": 340,
+			"text_rot" : 0, 
 			"points":[
 				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
 				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
@@ -865,12 +885,18 @@ ACJ.Vis.Triangle.createVisualization = function() {
 		.attr("stroke", "#fff")
 		.attr("stroke-width", 2);
 
-	ACJ.Vis.Triangle.vis.selectAll("svg")
-		.data(arrayOfPolygons)
-		.enter().append("text")
-		.attr("x", function(d) { return d.points[0].x; })
-		.attr("y", function(d){ return d.points[0].y; })
-		.text(function(d){ return d.name; });
+	var cont = document.getElementById("text_container");
+	for(var i = 0; i < arrayOfPolygons.length; i++) {
+		var nE = document.createElement("div");
+		nE.id = arrayOfPolygons[i].name;
+		nE.classList.add('triangle_text');
+		nE.style.width = arrayOfPolygons[i].text_width + 'px';
+		nE.style.transform = 'rotate(' + arrayOfPolygons[i].text_rot + 'deg)';
+		nE.style.left = arrayOfPolygons[i].points[0].x + 'px';
+		nE.style.top = arrayOfPolygons[i].points[0].y + 'px';
+		nE.innerHTML = arrayOfPolygons[i].name;
+		cont.appendChild(nE);
+	}
 }
 
 // String helper functions ///////////////////////////////////////////////////////////////////////////
