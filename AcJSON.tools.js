@@ -669,18 +669,19 @@ ACJ.Vis.SunburstProto = {
 		return individual.preNames + ' ' + individual.lastNames_Birth;
 	},
 	removeChildLinks: function removeChildLinks() {
-		var cont = document.getElementById('explanation');
-		var links = document.getElementsByClassName('uplink');
+		let cont = document.getElementById('explanation');
+		let links = document.getElementsByClassName('uplink');
 
 		while(links[0]) {
 		   links[0].parentNode.removeChild(links[0]);
 		}
 	},
 	findAndSetChildLinks: function findAndSetChildLinks(parentId) {
-		var family = undefined;
-		for(var i = 0; i < this.acJSONObj.families.length; i++) {
-			if(this.acJSONObj.families[i].husbandId === parentId || this.acJSONObj.families[i].wifeId === parentId) {
-				family = this.acJSONObj.families[i];
+		let family = undefined;
+		for(let fam of this.acJSONObj.families) {
+			if(fam.husbandId === parentId || fam.wifeId === parentId) {
+				family = fam;
+				break;
 			}
 		}
 
@@ -688,24 +689,24 @@ ACJ.Vis.SunburstProto = {
 			return;
 		}
 
-		var children = [];
-		for(var i = 0; i < this.acJSONObj.children.length; i++) {
-			if(this.acJSONObj.children[i].familyId === family.id) {
-				children.push(this.acJSONObj.children[i]);
+		let children = [];
+		this.acJSONObj.children.forEach(child => {
+			if(child.familyId === family.id) {
+				children.push(child);
 			}
-		}
+		});
 
 		if(children.length > 0) {
-			var cont = document.getElementById('explanation');
+			let cont = document.getElementById('explanation');
 
 			let scar = this.setChildAsRoot;
 			let boundScar = scar.bind(this);
 
-			for(var i = 0; i < children.length; i++) {
-				var a = document.createElement('a');
-				a.id = children[i].individualId;
+			for(let child of children) {
+				let a = document.createElement('a');
+				a.id = child.individualId;
 				a.href = '#';
-				a.innerHTML = 'Gehe zu ' + this.getTextForBreadcrumb(undefined, undefined, children[i].individualId);
+				a.innerHTML = 'Gehe zu ' + this.getTextForBreadcrumb(undefined, undefined, child.individualId);
 				a.className = 'uplink';
 				a.addEventListener('click', boundScar, false);
 
@@ -747,36 +748,22 @@ ACJ.Vis.SunburstFactory = function SunburstFactory(options) {
 
 
 // String helper functions ///////////////////////////////////////////////////////////////////////////
-function pad(value, length) {
-	return (value.toString().length < length) ? pad("0"+value, length):value;
-};
-function countOfCharInStr(str, searchChar) {
+const pad = (value, length) => (value.toString().length < length) ? pad("0"+value, length) : value;
+const countOfCharInStr = (str, searchChar) => {
 	var count = 0;
 	for(var i = 0; i < str.length; i++) {
-		if(str[i] === searchChar) {
-			count++;
-		}
+		if(str[i] === searchChar) count++;
 	}
-
 	return count;
 };
 
 // Color helper functions //////////////////////////////////////////////////////////////////////////
-function hexToR(h) {
-	return parseInt((cutHex(h)).substring(0,2),16);
-};
-function hexToG(h) {
-	return parseInt((cutHex(h)).substring(2,4),16);
-};
-function hexToB(h) {
-	return parseInt((cutHex(h)).substring(4,6),16);
-};
-function cutHex(h) {
-	return (h.charAt(0)=="#") ? h.substring(1,7) : h;
-};
-function rgbToHex(R,G,B) {
-	return toHex(R)+toHex(G)+toHex(B);
-};
+const hexToR = h => parseInt((cutHex(h)).substring(0,2),16);
+const hexToG = h => parseInt((cutHex(h)).substring(2,4),16);
+const hexToB = h => parseInt((cutHex(h)).substring(4,6),16);
+const cutHex = h => (h.charAt(0)=="#") ? h.substring(1,7) : h;
+const rgbToHex = (R,G,B) => toHex(R)+toHex(G)+toHex(B);
+
 function toHex(n) {
  	n = parseInt(n,10);
  	if (isNaN(n)) return "00";
