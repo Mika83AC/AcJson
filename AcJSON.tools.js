@@ -761,8 +761,8 @@ const countOfCharInStr = (str, searchChar) => {
 const hexToR = h => parseInt((cutHex(h)).substring(0,2),16);
 const hexToG = h => parseInt((cutHex(h)).substring(2,4),16);
 const hexToB = h => parseInt((cutHex(h)).substring(4,6),16);
-const cutHex = h => (h.charAt(0)=="#") ? h.substring(1,7) : h;
-const rgbToHex = (R,G,B) => toHex(R)+toHex(G)+toHex(B);
+const cutHex = h => (h.charAt(0) == "#") ? h.substring(1,7) : h;
+const rgbToHex = (R,G,B) => toHex(R) + toHex(G) + toHex(B);
 
 function toHex(n) {
  	n = parseInt(n,10);
