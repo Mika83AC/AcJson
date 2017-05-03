@@ -372,25 +372,26 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 
 // ACJ helper functions ///////////////////////////////////////////////////////////////////////////////////////////
 ACJ.Helper.getIndividual = function(acJSONObj, individId) {
-	acJSONObj.individuals.forEach(individual => {
-		if(individId !== '' && individual.id === individId) return individual;
-	});
+	for(let individual of acJSONObj.individuals) {
+		if(individId !== '' && individual.id === individId)
+			return individual;
+	}
 
 	return undefined;
 };
 ACJ.Helper.getFamilyId = function(acJSONObj, indidivId, childId) {
-	acJSONObj.children.forEach(child => {
-		if((indidivId !== '' && child.individualId === indidivId) || (childId !== '' && child.id === childId)) {
+	for(let child of acJSONObj.children) {
+		if((indidivId !== '' && child.individualId === indidivId) || (childId !== '' && child.id === childId))
 			return child.familyId;
-		}
-	});
+	}
 
 	return undefined;
 };
 ACJ.Helper.getFamily = function(acJSONObj, familyId) {
-	acJSONObj.families.forEach(family => {
-		if(familyId !== '' && family.id === familyId) return family;
-	});
+	for(let family of acJSONObj.families) {
+		if(familyId !== '' && family.id === familyId)
+			return family;
+	}
 
 	return undefined;
 };
@@ -737,149 +738,6 @@ ACJ.Vis.Sunburst.setChildAsRoot = function(e) {
 	ACJ.Vis.Sunburst.startIndividualId = e.currentTarget.id;
 	refreshVis();
 };
-
-// Triangle visualisation functions //////////////////////////////////////////////////////////////////
-ACJ.Vis.Triangle.acJSONObj = {};
-ACJ.Vis.Triangle.startIndividualId = 'I1';
-
-ACJ.Vis.Triangle.width = document.body.clientWidth;
-ACJ.Vis.Triangle.height = document.body.clientHeight - 50;
-ACJ.Vis.Triangle.widthUnit = ACJ.Vis.Triangle.width / 1000;
-ACJ.Vis.Triangle.heightUnit = ACJ.Vis.Triangle.height / 1000;
-
-ACJ.Vis.Triangle.vis = undefined;
-
-ACJ.Vis.Triangle.createVisualization = function() {
-	ACJ.Vis.Triangle.vis = d3.select("#chart").append("svg")
-		.attr("width", ACJ.Vis.Triangle.width)
-		.attr("height", ACJ.Vis.Triangle.height);
-
-	var arrayOfPolygons =  [
-		{
-			"name": "father",
-			"color": "#228800",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
-		},{
-			"name": "father_parents",
-			"color": "#228800",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*138), "y":(ACJ.Vis.Triangle.heightUnit*50)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
-		},{
-			"name": "father_siblings",
-			"color": "#228800",
-			"text_width": 340,
-			"text_rot" : 45,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*120), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
-		},{
-			"name": "mother",
-			"color": "#990022",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
-		},{
-			"name": "mother_parents",
-			"color": "#990022",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*862), "y":(ACJ.Vis.Triangle.heightUnit*50)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
-		},{
-			"name": "mother_siblings",
-			"color": "#990022",
-			"text_width": 340,
-			"text_rot" : 315,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*880), "y":(ACJ.Vis.Triangle.heightUnit*100)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
-		},{
-			"name": "indivividual",
-			"color": "#006699",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
-		},{
-			"name": "indivividual_brothers",
-			"color": "#006699",
-			"text_width": 340,
-			"text_rot" : 45,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*410), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
-		},{
-			"name": "indivividual_sisters",
-			"color": "#006699",
-			"text_width": 340,
-			"text_rot" : 315,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*590), "y":(ACJ.Vis.Triangle.heightUnit*740)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
-		},{
-			"name": "indivividual_children",
-			"color": "black",
-			"text_width": 340,
-			"text_rot" : 0,
-			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)},
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*850)}]
-		}
-	];
-
-	ACJ.Vis.Triangle.vis.selectAll("svg")
-		.data(arrayOfPolygons)
-		.enter().append("polygon")
-		.attr("points", function(d) {
-			return d.points.map(function(d) { return [d.x,d.y].join(","); }).join(" ");})
-		.attr("id", function(d) { return d.name; })
-		.attr("fill", function(d){ return d.color; })
-		.attr("stroke", "#fff")
-		.attr("stroke-width", 2);
-
-	var cont = document.getElementById("text_container");
-	for(var i = 0; i < arrayOfPolygons.length; i++) {
-		var nE = document.createElement("div");
-		nE.id = arrayOfPolygons[i].name;
-		nE.classList.add('triangle_text');
-		nE.style.width = arrayOfPolygons[i].text_width + 'px';
-		nE.style.transform = 'rotate(' + arrayOfPolygons[i].text_rot + 'deg)';
-		nE.style.left = arrayOfPolygons[i].points[0].x + 'px';
-		nE.style.top = arrayOfPolygons[i].points[0].y + 'px';
-		nE.innerHTML = arrayOfPolygons[i].name;
-		cont.appendChild(nE);
-	}
-}
 
 // String helper functions ///////////////////////////////////////////////////////////////////////////
 function pad(value, length) {

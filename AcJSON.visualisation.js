@@ -3,11 +3,11 @@
 var currentVisType = 'sunburst';
 
 function loadFile(evt) {
-	var file = evt.target.files[0]; 
+	var file = evt.target.files[0];
 
 	if (file) {
 		var r = new FileReader();
-		r.onload = function(e) { 
+		r.onload = function(e) {
 			ACJ.Vis.Sunburst.acJSONObj = JSON.parse(e.target.result);
 
 			// Basic setup of page elements.
@@ -16,7 +16,7 @@ function loadFile(evt) {
 			startVis();
 		}
 		r.readAsText(file);
-	} else { 
+	} else {
 		alert("Failed to load file");
 	}
 };
@@ -53,4 +53,3 @@ function refreshVis() {
 };
 
 window.document.getElementById('fileinput').addEventListener('change', loadFile, false);
-window.document.getElementById('vistype').addEventListener('change', visChanged, false);
