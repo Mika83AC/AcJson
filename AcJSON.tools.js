@@ -401,9 +401,7 @@ ACJ.Vis.SunburstProto = {
 	createVisualization: function createVisualization() {
 		// For efficiency, filter nodes to keep only those large enough to see.
 		let nodes = this.partition.nodes(this.hierarchyArray)
-			.filter(function(d) {
-					return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
-				});
+			.filter(d => d.dx > 0.005); // 0.005 radians = 0.29 degrees
 
 		let cli = this.click;
 		let boundCli = cli.bind(this);
@@ -417,10 +415,10 @@ ACJ.Vis.SunburstProto = {
 		let path = this.vis.data([this.hierarchyArray]).selectAll("path")
 			.data(nodes)
 			.enter().append("svg:path")
-			.attr("display", function(d) { return d.depth ? null : "none"; })
+			.attr("display", d => d.depth ? null : "none")
 			.attr("d", this.arc)
 			.attr("fill-rule", "evenodd")
-			.style("fill", function(d) { return d.color; })
+			.style("fill", d => d.color)
 			.style("opacity", 1)
 			.on("mouseover", boundMouseo)
 			.on("click", boundCli);
@@ -448,7 +446,7 @@ ACJ.Vis.SunburstProto = {
 	mouseover: function mouseover(d) {
 		this.setTextForCenterInfo(d, undefined, undefined, false);
 
-	  	var sequenceArray = this.getAncestors(d);
+	  	let sequenceArray = this.getAncestors(d);
 	  	this.updateBreadcrumbs(sequenceArray);
 
 	  	// Fade all the segments.
@@ -456,9 +454,7 @@ ACJ.Vis.SunburstProto = {
 
 	  	// Then highlight only those that are an ancestor of the current segment.
 	  	this.vis.selectAll("path")
-		  	.filter(function(node) {
-				return (sequenceArray.indexOf(node) >= 0);
-			})
+		  	.filter(node => sequenceArray.indexOf(node) >= 0)
 		  	.style("opacity", 1);
 	},
 	mouseleave: function mouseleave(d) {
@@ -485,7 +481,7 @@ ACJ.Vis.SunburstProto = {
 	},
 	initializeBreadcrumbTrail: function initializeBreadcrumbTrail() {
 	  	// Add the svg area.
-	  	var trail = d3.select("#sequence").append("svg:svg")
+	  	let trail = d3.select("#sequence").append("svg:svg")
 		  	.attr("width", this.width)
 		  	.attr("height", 50)
 		  	.attr("id", "trail");
@@ -495,7 +491,7 @@ ACJ.Vis.SunburstProto = {
 			.style("fill", "#000");
 	},
 	breadcrumbPoints: function breadcrumbPoints(d, i) {
-	  	var points = [];
+	  	let points = [];
 	  	points.push("0,0");
 	  	points.push(this.b.w + ",0");
 	  	points.push(this.b.w + this.b.t + "," + (this.b.h / 2));
@@ -507,24 +503,20 @@ ACJ.Vis.SunburstProto = {
 	  	return points.join(" ");
 	},
 	updateBreadcrumbs: function updateBreadcrumbs(nodeArray) {
-		var that = this;
-	  	var g = d3.select("#trail")
+		let that = this;
+	  	let g = d3.select("#trail")
 		  	.selectAll("g")
-		  	.data(nodeArray, function(d) {
-		  		return that.getTextForBreadcrumb(d, undefined, undefined);
-		  	});
+		  	.data(nodeArray, d => that.getTextForBreadcrumb(d, undefined, undefined));
 
 	  	// Add breadcrumb and label for entering nodes.
-	  	var entering = g.enter().append("svg:g");
+	  	let entering = g.enter().append("svg:g");
 
 		let bcp = this.breadcrumbPoints;
 		let boundBcp = bcp.bind(this);
 
 	  	entering.append("svg:polygon")
 		  	.attr("points", boundBcp)
-		  	.style("fill", function(d) {
-		  		return d.color;
-		  	});
+		  	.style("fill", d => d.color);
 
 		let gtfb = this.getTextForBreadcrumb;
 		let boundGtfb = gtfb.bind(this);
@@ -534,14 +526,10 @@ ACJ.Vis.SunburstProto = {
 		  	.attr("y", this.b.h / 2)
 		  	.attr("dy", "0.35em")
 		  	.attr("text-anchor", "middle")
-		  	.text(function(d) {
-		  		return boundGtfb(d, undefined, undefined);
-		  	});
+		  	.text(d => boundGtfb(d, undefined, undefined));
 
 	  	// Set position for entering and updating nodes.
-	  	g.attr("transform", function(d, i) {
-			return "translate(" + i * (that.b.w + that.b.s) + ", 0)";
-	  	});
+	  	g.attr("transform", (d, i) => "translate(" + i * (that.b.w + that.b.s) + ", 0)");
 
 	  	// Remove exiting nodes.
 	  	g.exit().remove();
@@ -551,8 +539,8 @@ ACJ.Vis.SunburstProto = {
 	},
 
 	buildHierarchyArray: function buildHierarchyArray(startIndividualId) {
-		var indiv = ACJ.Helper.getIndividual(this.acJSONObj, startIndividualId);
-		var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
+		let indiv = ACJ.Helper.getIndividual(this.acJSONObj, startIndividualId);
+		let indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
 		indivNode.data = indiv;
 
 		this.getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
@@ -560,32 +548,28 @@ ACJ.Vis.SunburstProto = {
 		this.hierarchyArray = indivNode;
 	},
 	getChildNodes: function getChildNodes(indiv, indivNode, size, first, parentColor) {
-		var famId = ACJ.Helper.getFamilyId(this.acJSONObj, indiv.id);
+		let famId = ACJ.Helper.getFamilyId(this.acJSONObj, indiv.id);
 		if(famId === undefined) {
 			return undefined;
 		}
 
-		var fam = ACJ.Helper.getFamily(this.acJSONObj, famId);
+		let fam = ACJ.Helper.getFamily(this.acJSONObj, famId);
 		if(fam !== undefined) {
-			var mother = ACJ.Helper.getIndividual(this.acJSONObj, fam.wifeId);
-			var father = ACJ.Helper.getIndividual(this.acJSONObj, fam.husbandId);
+			let mother = ACJ.Helper.getIndividual(this.acJSONObj, fam.wifeId);
+			let father = ACJ.Helper.getIndividual(this.acJSONObj, fam.husbandId);
 
 			if(mother !== undefined) {
-				var color = first ? "#490000" : (function(c) {
-					var R = hexToR(c), G = hexToG(c), B = hexToB(c);
-					return rgbToHex(R, G + 30, B);
-				})(parentColor);
-				var newNode = {"data": {}, "children": [], "size": size, "color": color}
+				let color = first ? "#490000" : (c => rgbToHex(hexToR(c), hexToG(c) + 30, hexToB(c)))(parentColor);
+				let newNode = {"data": {}, "children": [], "size": size, "color": color}
+
 				newNode.data = mother;
 				this.getChildNodes(mother, newNode, size / 2, false, color);
 				indivNode.children.push(newNode);
 			}
 			if(father !== undefined) {
-				var color = first ? "#004900" : (function(c) {
-					var R = hexToR(c), G = hexToG(c), B = hexToB(c);
-					return rgbToHex(R, G, B + 30);
-				})(parentColor);
-				var newNode = {"data": {}, "children": [], "size": size, "color": color}
+				let color = first ? "#004900" : (c => rgbToHex(hexToR(c), hexToG(c), hexToB(c) + 30))(parentColor);
+				let newNode = {"data": {}, "children": [], "size": size, "color": color}
+
 				newNode.data = father;
 				this.getChildNodes(father, newNode, size / 2, false, color);
 				indivNode.children.push(newNode);
@@ -595,8 +579,8 @@ ACJ.Vis.SunburstProto = {
 		return indivNode;
 	},
 	getAncestors: function getAncestors(node) {
-	  	var path = [];
-	  	var current = node;
+	  	let path = [];
+	  	let current = node;
 	  	while (current.parent) {
 			path.unshift(current);
 			current = current.parent;
@@ -608,7 +592,7 @@ ACJ.Vis.SunburstProto = {
 	  	return path;
 	},
 	setTextForCenterInfo: function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
-		var individual = undefined;
+		let individual = undefined;
 
 		// Individual ermitteln
 		if(d3d !== undefined) {
@@ -618,9 +602,10 @@ ACJ.Vis.SunburstProto = {
 			individual = indiv;
 		}
 		else if(indivId !== undefined) {
-			for(var i = 0; i < this.acJSONObj.individuals.length; i++) {
-				if(this.acJSONObj.individuals[i].id === indivId) {
-					individual = this.acJSONObj.individuals[i];
+			for(let indi of this.acJSONObj.individuals) {
+				if(indi.id === indivId) {
+					individual = indi;
+					break;
 				}
 			}
 		}
@@ -632,23 +617,20 @@ ACJ.Vis.SunburstProto = {
 		document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
 
 		// Events dieser Person ermitteln
-		var individualEvents = [];
-		for(var i = 0; i < this.acJSONObj.events.length; i++) {
-			if(this.acJSONObj.events[i].individualId === individual.id) {
-				individualEvents.push(this.acJSONObj.events[i]);
+		let individualEvents = [];
+
+		this.acJSONObj.events.forEach(event => {
+			if(event.individualId === individual.id) {
+				individualEvents.push(event);
 			}
-		}
+		});
 
 		// Daten schreiben wenn vorhanden
-		var birth = '', death = '';
-		for(var i = 0; i < individualEvents.length; i++) {
-			if(individualEvents[i].eventTypeId === 1){
-				birth = individualEvents[i].date;
-			}
-			else if(individualEvents[i].eventTypeId === 5){
-				death = individualEvents[i].date;
-			}
-		}
+		let birth = '', death = '';
+		individualEvents.forEach(event => {
+			if(event.eventTypeId === 1) birth = event.date;
+			else if(event.eventTypeId === 5)	death = event.date;
+		});
 
 		document.getElementById("dates").innerHTML = (birth ? birth.substring(birth.length - 4) : '') + ' - ' + (death ? death.substring(death.length - 4) : '');
 
@@ -659,7 +641,7 @@ ACJ.Vis.SunburstProto = {
 		}
 	},
 	getTextForBreadcrumb: function getTextForBreadcrumb(d3d, indiv, indivId) {
-		var individual = undefined;
+		let individual = undefined;
 
 		if(d3d !== undefined) {
 			individual = d3d.data;
@@ -668,9 +650,10 @@ ACJ.Vis.SunburstProto = {
 			individual = indiv;
 		}
 		else if(indivId !== undefined) {
-			for(var i = 0; i < this.acJSONObj.individuals.length; i++) {
-				if(this.acJSONObj.individuals[i].id === indivId) {
-					individual = this.acJSONObj.individuals[i];
+			for(let indi of this.acJSONObj.individuals) {
+				if(indi.id === indivId) {
+					individual = indi;
+					break;
 				}
 			}
 		}
