@@ -6,7 +6,6 @@ ACJ.Conv = ACJ.Conv || {};
 ACJ.Helper = ACJ.Helper || {};
 ACJ.Vis = ACJ.Vis || {};
 ACJ.Vis.Sunburst = ACJ.Vis.Sunburst || {};
-ACJ.Vis.Triangle = ACJ.Vis.Triangle || {};
 
 // Classes for ACJ format //////////////////////////////////////////////////////////////////////////////////////////
 ACJ.IndividualProto = {
