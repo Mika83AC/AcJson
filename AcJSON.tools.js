@@ -263,15 +263,9 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 		let birth = undefined, baptism = undefined, death = undefined;
 
 		for(let event of data.events) {
-			if(event.individualId === individual.id && event.eventTypeId === 1) {
-				birth = event;
-			}
-			if(event.individualId === individual.id && event.eventTypeId === 2) {
-				baptism = event;
-			}
-			if(event.individualId === individual.id && event.eventTypeId === 5) {
-				death = event;
-			}
+			if(event.individualId === individual.id && event.eventTypeId === 1) birth = event;
+			if(event.individualId === individual.id && event.eventTypeId === 2) baptism = event;
+			if(event.individualId === individual.id && event.eventTypeId === 5) death = event;
 
 			if(birth !== undefined && baptism !== undefined && death !== undefined) {
 				break;
@@ -346,12 +340,8 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 
 		var marriage = undefined, divore = undefined;
 		for(let event of data.events) {
-			if(event.familyId === family.id && event.eventTypeId === 3) {
-				marriage = event;
-			}
-			if(event.familyId === family.id && event.eventTypeId === 4) {
-				divore = event;
-			}
+			if(event.familyId === family.id && event.eventTypeId === 3) marriage = event;
+			if(event.familyId === family.id && event.eventTypeId === 4) divore = event;
 
 			if(marriage !== undefined && divore !== undefined) {
 				break;
@@ -382,30 +372,25 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 
 // ACJ helper functions ///////////////////////////////////////////////////////////////////////////////////////////
 ACJ.Helper.getIndividual = function(acJSONObj, individId) {
-	for(var i = 0; i < acJSONObj.individuals.length; i++) {
-		if(individId !== '' && acJSONObj.individuals[i].id === individId){
-			return acJSONObj.individuals[i];
-		}
-	}
+	acJSONObj.individuals.forEach(individual => {
+		if(individId !== '' && individual.id === individId) return individual;
+	});
 
 	return undefined;
 };
 ACJ.Helper.getFamilyId = function(acJSONObj, indidivId, childId) {
-	for(var i = 0; i < acJSONObj.children.length; i++) {
-		if((indidivId !== '' && acJSONObj.children[i].individualId === indidivId) ||
-			(childId !== '' && acJSONObj.children[i].id === childId)){
-			return acJSONObj.children[i].familyId;
+	acJSONObj.children.forEach(child => {
+		if((indidivId !== '' && child.individualId === indidivId) || (childId !== '' && child.id === childId)) {
+			return child.familyId;
 		}
-	}
+	});
 
 	return undefined;
 };
 ACJ.Helper.getFamily = function(acJSONObj, familyId) {
-	for(var i = 0; i < acJSONObj.families.length; i++) {
-		if(familyId !== '' && acJSONObj.families[i].id === familyId){
-			return acJSONObj.families[i];
-		}
-	}
+	acJSONObj.families.forEach(family => {
+		if(familyId !== '' && family.id === familyId) return family;
+	});
 
 	return undefined;
 };
