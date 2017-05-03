@@ -715,13 +715,16 @@ ACJ.Vis.SunburstProto = {
 		if(children.length > 0) {
 			var cont = document.getElementById('explanation');
 
+			let scar = this.setChildAsRoot;
+			let boundScar = scar.bind(this);
+
 			for(var i = 0; i < children.length; i++) {
 				var a = document.createElement('a');
 				a.id = children[i].individualId;
 				a.href = '#';
 				a.innerHTML = 'Gehe zu ' + this.getTextForBreadcrumb(undefined, undefined, children[i].individualId);
 				a.className = 'uplink';
-				a.addEventListener('click', this.setChildAsRoot, false);
+				a.addEventListener('click', boundScar, false);
 
 				cont.appendChild(a);
 			}
