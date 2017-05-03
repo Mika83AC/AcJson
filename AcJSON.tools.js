@@ -397,17 +397,16 @@ ACJ.Helper.getFamily = function(acJSONObj, familyId) {
 };
 
 // Sunburst Visualisation functions and variables ////////////////////////////////////////////////////////////////
-ACJ.Vis.Sunburst.acJSONObj = {};
-ACJ.Vis.Sunburst.hierarchyArray = {};
-ACJ.Vis.Sunburst.startIndividualId = 'I1';
-
-ACJ.Vis.Sunburst.width = document.body.clientWidth;
-ACJ.Vis.Sunburst.height = document.body.clientHeight - 60;
-ACJ.Vis.Sunburst.radius = Math.min(ACJ.Vis.Sunburst.width, ACJ.Vis.Sunburst.height) / 2.0;
-
-ACJ.Vis.Sunburst.b = { w: 150, h: 30, s: 3, t: 10 };
-
-ACJ.Vis.Sunburst.totalSize = 0;
+ACJ.Vis.Sunburst = {
+	acJSONObj: {},
+	hierarchyArray: {},
+	startIndividualId: 'I1',
+	width: document.body.clientWidth,
+	height: document.body.clientHeight - 60,
+	radius: Math.min(document.body.clientWidth, document.body.clientHeight - 60) / 2.0,
+	b: { w: 150, h: 30, s: 3, t: 10 },
+	totalSize: 0,
+};
 
 ACJ.Vis.Sunburst.vis = undefined;
 ACJ.Vis.Sunburst.partition = d3.layout.partition()
