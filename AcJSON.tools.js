@@ -9,47 +9,65 @@ ACJ.Vis.Triangle = ACJ.Vis.Triangle || {};
 ACJ.Helper = ACJ.Helper || {};
 
 // Classes for ACJ format //////////////////////////////////////////////////////////////////////////////////////////
-ACJ.Individual = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
-	this.id = id;
-	this.preNames = preNames;
-	this.lastNames_Birth = lastNames_Birth;
-	this.lastNames_Mariage = lastNames_Mariage;
-	this.sexId = sexId;
-	this.memo = memo;
-	this.familySearchOrgId = familySearchOrgId;     
-};
-ACJ.Family = function(id, preNames, lastNames_Birth, lastNames_Mariage, sexId, memo, familySearchOrgId) {
-	this.id = id;
-	this.preNames = preNames;
-	this.lastNames_Birth = lastNames_Birth;
-	this.lastNames_Mariage = lastNames_Mariage;
-	this.sexId = sexId;
-	this.memo = memo;
-	this.familySearchOrgId = familySearchOrgId;    
-};
-ACJ.Child = function(id, individualId, familyId, memo) {
-	this.id = id;
-	this.individualId = individualId;
-	this.familyId = familyId;
-	this.memo = "";         
-};
-ACJ.Event = function(id, eventTypeId, individualId, familyId, date, place, memo) {
-	this.id = id;
-	this.eventTypeId = eventTypeId;
-	this.individualId = individualId;
-	this.familyId = familyId;
-	this.date = date;
-	this.place = place;
-	this.memo = memo;     
-};
-ACJ.Media = function(id, mediaTypeId, individualId, familyId, path, place, memo) {
-	this.id = id;
-	this.mediaTypeId = 0;
-	this.individualId = individualId;
-	this.familyId = familyId;
-	this.path = path;
-	this.memo = memo;   
-};
+var IndividualProto = {
+	id: '',
+	preNames: '',
+	lastNames_Birth: '',
+	lastNames_Mariage: '',
+	sexId: 1,
+	memo: '',
+	familySearchOrgId: ''
+}
+var IndividualFactory = function IndividualFactory(options) {
+   return Object.assign(Object.create(IndividualProto), options);
+}
+
+var FamilyProto = {
+	id: '',
+	familySearchOrgId: '',
+	husbandId: '',
+	wifeId: '',
+	memo: ''
+}
+var FamilyFactory = function FamilyFactory(options) {
+   return Object.assign(Object.create(IndividualProto), options);
+}
+
+var ChildProto = {
+	id: '',
+	individualId: '',
+	familyId: '',
+	memo: ''
+}
+var ChildFactory = function ChildFactory(options) {
+   return Object.assign(Object.create(ChildProto), options);
+}
+
+var EventProto = {
+	id: '',
+	eventTypeId: 0,
+	individualId: '',
+	familyId: '',
+	date: '',
+	place: '',
+	memo: ''
+}
+var EventFactory = function EventFactory(options) {
+   return Object.assign(Object.create(EventProto), options);
+}
+
+var MediaProto = {
+	id: '',
+	mediaTypeId: 0,
+	individualId: '',
+	familyId: '',
+	path: '',
+	place: '',
+	memo: ''
+}
+var MediaFactory = function MediaFactory(options) {
+   return Object.assign(Object.create(MediaProto), options);
+}
 
 // Converter functions ////////////////////////////////////////////////////////////////////////////////////////////
 ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
@@ -74,7 +92,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
-			individual = new ACJ.Individual();
+			individual = IndividualFactory();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
 
 			if(individual.id === "I80") {
@@ -88,7 +106,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 			individual.lastNames_Birth = line.substring(line.indexOf("/") + 1).replace("/", "");
 		}
 		if(lastCommandSection === "INDI" && line.startsWith("1 SEX")) {
-			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2; 
+			individual.sexId = line.substring(("1 SEX").length + 1) === "M" ? 1 : 2;
 		}
 		if(lastCommandSection === "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 DATE")) {
 			if(event !== undefined) {
@@ -96,7 +114,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new ACJ.Event(nextEventId++, 1, individual.id, 0, "", "", "");
+			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
@@ -106,7 +124,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new ACJ.Event(nextEventId++, 1, individual.id, 0, "", "", "");
+				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -119,7 +137,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new ACJ.Event(nextEventId++, 2, individual.id, 0, "", "", "");
+			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
@@ -129,7 +147,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new ACJ.Event(nextEventId++, 2, individual.id, 0, "", "", "");
+				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -142,7 +160,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new ACJ.Event(nextEventId++, 5, individual.id, 0, "", "", "");
+			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
@@ -152,7 +170,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new ACJ.Event(nextEventId++, 5, individual.id, 0, "", "", "");
+				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -176,7 +194,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				families.push(family);
 			}
 
-			family = new ACJ.Family();
+			family = FamilyFactory();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
@@ -188,8 +206,8 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "").replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			child = new ACJ.Child();
-			child.id = nextChildId++;
+			child = ChildFactory();
+			child.id = 'C' + nextChildId++;
 			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "").replace("@", "");
 			child.familyId = family.id;
 
@@ -201,7 +219,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = new ACJ.Event(nextEventId++, 3, 0, family.id, "", "", "");
+			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
@@ -211,7 +229,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = new ACJ.Event(nextEventId++, 3, 0, family.id, "", "", "");
+				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -371,7 +389,7 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 				gedStr += "2 PLAC " + marriage.place + lb;
 			}
 		}
-		
+
 		// Divorces are not part of the GEDCOM format
 
 		if(data.families[i].familySearchOrgId !== undefined) {
@@ -424,7 +442,7 @@ ACJ.Vis.Sunburst.radius = Math.min(ACJ.Vis.Sunburst.width, ACJ.Vis.Sunburst.heig
 
 ACJ.Vis.Sunburst.b = { w: 150, h: 30, s: 3, t: 10 };
 
-ACJ.Vis.Sunburst.totalSize = 0; 
+ACJ.Vis.Sunburst.totalSize = 0;
 
 ACJ.Vis.Sunburst.vis = undefined;
 ACJ.Vis.Sunburst.partition = d3.layout.partition()
@@ -537,8 +555,8 @@ ACJ.Vis.Sunburst.breadcrumbPoints = function(d, i) {
 ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
   	var g = d3.select("#trail")
 	  	.selectAll("g")
-	  	.data(nodeArray, function(d) { 
-	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined); 
+	  	.data(nodeArray, function(d) {
+	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined);
 	  	});
 
   	// Add breadcrumb and label for entering nodes.
@@ -546,8 +564,8 @@ ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
 
   	entering.append("svg:polygon")
 	  	.attr("points", ACJ.Vis.Sunburst.breadcrumbPoints)
-	  	.style("fill", function(d) { 
-	  		return d.color; 
+	  	.style("fill", function(d) {
+	  		return d.color;
 	  	});
 
   	entering.append("svg:text")
@@ -555,8 +573,8 @@ ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
 	  	.attr("y", ACJ.Vis.Sunburst.b.h / 2)
 	  	.attr("dy", "0.35em")
 	  	.attr("text-anchor", "middle")
-	  	.text(function(d) { 
-	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined); 
+	  	.text(function(d) {
+	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined);
 	  	});
 
   	// Set position for entering and updating nodes.
@@ -593,7 +611,7 @@ ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentC
 		var father = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, fam.husbandId);
 
 		if(mother !== undefined) {
-			var color = first ? "#490000" : (function(c) { 
+			var color = first ? "#490000" : (function(c) {
 				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
 				return rgbToHex(R, G + 30, B);
 			})(parentColor);
@@ -603,7 +621,7 @@ ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentC
 			indivNode.children.push(newNode);
 		}
 		if(father !== undefined) {
-			var color = first ? "#004900" : (function(c) { 
+			var color = first ? "#004900" : (function(c) {
 				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
 				return rgbToHex(R, G, B + 30);
 			})(parentColor);
@@ -612,7 +630,7 @@ ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentC
 			ACJ.Vis.Sunburst.getChildNodes(father, newNode, size / 2, false, color);
 			indivNode.children.push(newNode);
 		}
-	} 
+	}
 
 	return indivNode;
 }
@@ -636,7 +654,7 @@ ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChil
 	// Individual ermitteln
 	if(d3d !== undefined) {
 		individual = d3d.data;
-	} 
+	}
 	else if(indiv !== undefined) {
 		individual = indiv;
 	}
@@ -686,7 +704,7 @@ ACJ.Vis.Sunburst.getTextForBreadcrumb = function(d3d, indiv, indivId) {
 
 	if(d3d !== undefined) {
 		individual = d3d.data;
-	} 
+	}
 	else if(indiv !== undefined) {
 		individual = indiv;
 	}
@@ -775,102 +793,102 @@ ACJ.Vis.Triangle.createVisualization = function() {
 	var arrayOfPolygons =  [
 		{
 			"name": "father",
-			"color": "#228800", 
+			"color": "#228800",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
 		},{
 			"name": "father_parents",
-			"color": "#228800", 
+			"color": "#228800",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*138), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*138), "y":(ACJ.Vis.Triangle.heightUnit*50)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
 		},{
 			"name": "father_siblings",
-			"color": "#228800", 
+			"color": "#228800",
 			"text_width": 340,
-			"text_rot" : 45, 
+			"text_rot" : 45,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*120), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*120), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*160), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
 		},{
 			"name": "mother",
-			"color": "#990022", 
+			"color": "#990022",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
 		},{
 			"name": "mother_parents",
-			"color": "#990022", 
+			"color": "#990022",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*862), "y":(ACJ.Vis.Triangle.heightUnit*50)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*50)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*862), "y":(ACJ.Vis.Triangle.heightUnit*50)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*100)}]
 		},{
 			"name": "mother_siblings",
-			"color": "#990022", 
+			"color": "#990022",
 			"text_width": 340,
-			"text_rot" : 315, 
+			"text_rot" : 315,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*880), "y":(ACJ.Vis.Triangle.heightUnit*100)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*840), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*880), "y":(ACJ.Vis.Triangle.heightUnit*100)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}]
 		},{
 			"name": "indivividual",
-			"color": "#006699", 
+			"color": "#006699",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
 		},{
 			"name": "indivividual_brothers",
-			"color": "#006699", 
+			"color": "#006699",
 			"text_width": 340,
-			"text_rot" : 45, 
+			"text_rot" : 45,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*257), "y":(ACJ.Vis.Triangle.heightUnit*400)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*297), "y":(ACJ.Vis.Triangle.heightUnit*400)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*410), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
 		},{
 			"name": "indivividual_sisters",
-			"color": "#006699", 
+			"color": "#006699",
 			"text_width": 340,
-			"text_rot" : 315, 
+			"text_rot" : 315,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*590), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*703), "y":(ACJ.Vis.Triangle.heightUnit*400)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*743), "y":(ACJ.Vis.Triangle.heightUnit*400)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*590), "y":(ACJ.Vis.Triangle.heightUnit*740)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}]
 		},{
 			"name": "indivividual_children",
-			"color": "black", 
+			"color": "black",
 			"text_width": 340,
-			"text_rot" : 0, 
+			"text_rot" : 0,
 			"points":[
-				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
-				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)}, 
+				{"x":(ACJ.Vis.Triangle.widthUnit*450), "y":(ACJ.Vis.Triangle.heightUnit*740)},
+				{"x":(ACJ.Vis.Triangle.widthUnit*550), "y":(ACJ.Vis.Triangle.heightUnit*740)},
 				{"x":(ACJ.Vis.Triangle.widthUnit*500), "y":(ACJ.Vis.Triangle.heightUnit*850)}]
 		}
 	];
@@ -878,7 +896,7 @@ ACJ.Vis.Triangle.createVisualization = function() {
 	ACJ.Vis.Triangle.vis.selectAll("svg")
 		.data(arrayOfPolygons)
 		.enter().append("polygon")
-		.attr("points", function(d) { 
+		.attr("points", function(d) {
 			return d.points.map(function(d) { return [d.x,d.y].join(","); }).join(" ");})
 		.attr("id", function(d) { return d.name; })
 		.attr("fill", function(d){ return d.color; })
