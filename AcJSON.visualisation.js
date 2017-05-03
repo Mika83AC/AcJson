@@ -1,15 +1,17 @@
 "use strict";
 
+var sunburst = ACJ.Vis.SunburstFactory();
+
 function loadFile(evt) {
 	var file = evt.target.files[0];
 
 	if (file) {
 		var r = new FileReader();
 		r.onload = function(e) {
-			ACJ.Vis.Sunburst.acJSONObj = JSON.parse(e.target.result);
+			sunburst.acJSONObj = JSON.parse(e.target.result);
 
 			// Basic setup of page elements.
-			ACJ.Vis.Sunburst.initializeBreadcrumbTrail();
+			sunburst.initializeBreadcrumbTrail();
 
 			startVis();
 		}
@@ -19,19 +21,19 @@ function loadFile(evt) {
 	}
 };
 function startVis() {
-	ACJ.Vis.Sunburst.buildHierarchyArray(ACJ.Vis.Sunburst.startIndividualId);
+	sunburst.buildHierarchyArray(sunburst.startIndividualId);
 
-	ACJ.Vis.Sunburst.vis = d3.select("#chart").append("svg:svg")
-		.attr("width", ACJ.Vis.Sunburst.width)
-		.attr("height", ACJ.Vis.Sunburst.height)
+	sunburst.vis = d3.select("#chart").append("svg:svg")
+		.attr("width", sunburst.width)
+		.attr("height", sunburst.height)
 		.append("svg:g")
 		.attr("id", "container")
-		.attr("transform", "translate(" + ACJ.Vis.Sunburst.width / 2 + "," + ACJ.Vis.Sunburst.height / 2 + ")");
+		.attr("transform", "translate(" + sunburst.width / 2 + "," + sunburst.height / 2 + ")");
 
-	ACJ.Vis.Sunburst.vis.append("svg:circle").attr("r", ACJ.Vis.Sunburst.radius).style("opacity", 0);
+	sunburst.vis.append("svg:circle").attr("r", sunburst.radius).style("opacity", 0);
 
-	ACJ.Vis.Sunburst.createVisualization();
-	ACJ.Vis.Sunburst.setInitialData();
+	sunburst.createVisualization();
+	sunburst.setInitialData();
 };
 
 function refreshVis() {

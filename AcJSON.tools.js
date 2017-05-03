@@ -397,7 +397,342 @@ ACJ.Helper.getFamily = function(acJSONObj, familyId) {
 };
 
 // Sunburst Visualisation functions and variables ////////////////////////////////////////////////////////////////
-ACJ.Vis.Sunburst = {
+ACJ.Vis.SunburstProto = {
+	createVisualization: function createVisualization() {
+		// For efficiency, filter nodes to keep only those large enough to see.
+		let nodes = this.partition.nodes(this.hierarchyArray)
+			.filter(function(d) {
+					return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
+				});
+
+		let cli = this.click;
+		let boundCli = cli.bind(this);
+
+		let mouseo = this.mouseover;
+		let boundMouseo = mouseo.bind(this);
+
+		let mousel = this.mouseleave;
+		let boundMousel = mousel.bind(this);
+
+		let path = this.vis.data([this.hierarchyArray]).selectAll("path")
+			.data(nodes)
+			.enter().append("svg:path")
+			.attr("display", function(d) { return d.depth ? null : "none"; })
+			.attr("d", this.arc)
+			.attr("fill-rule", "evenodd")
+			.style("fill", function(d) { return d.color; })
+			.style("opacity", 1)
+			.on("mouseover", boundMouseo)
+			.on("click", boundCli);
+
+		// Add the mouseleave handler to the bounding circle.
+		d3.select("#container").on("mouseleave", boundMousel);
+
+		let exp = document.getElementById("explanation");
+		exp.style.width = '200px';
+		exp.style.height = '200px';
+		exp.style.left = (this.width / 2 - 100) + 'px';
+		exp.style.top = (this.height / 2 - 100) + 'px';
+
+		// Get total size of the tree = value of root node from partition.
+		this.totalSize = path.node().__data__.value;
+	},
+	setInitialData: function setInitialData() {
+		// Initial view of root data
+	  	this.setTextForCenterInfo(this.hierarchyArray, undefined, undefined, true);
+	},
+	click: function click(d) {
+		this.startIndividualId = d.data.id;
+		refreshVis();
+	},
+	mouseover: function mouseover(d) {
+		this.setTextForCenterInfo(d, undefined, undefined, false);
+
+	  	var sequenceArray = this.getAncestors(d);
+	  	this.updateBreadcrumbs(sequenceArray);
+
+	  	// Fade all the segments.
+	  	d3.selectAll("path").style("opacity", 0.3);
+
+	  	// Then highlight only those that are an ancestor of the current segment.
+	  	this.vis.selectAll("path")
+		  	.filter(function(node) {
+				return (sequenceArray.indexOf(node) >= 0);
+			})
+		  	.style("opacity", 1);
+	},
+	mouseleave: function mouseleave(d) {
+	  	// Hide the breadcrumb trail
+	  	d3.select("#trail").style("visibility", "hidden");
+
+	  	// Deactivate all segments during transition.
+	  	d3.selectAll("path").on("mouseover", null);
+
+		let mof = this.mouseover;
+		let boundMof = mof.bind(this);
+
+	  	// Transition each segment to full opacity and then reactivate it.
+	  	d3.selectAll("path")
+		  	.transition()
+		  	.duration(250)
+		  	.style("opacity", 1)
+		  	.each("end", function() {
+				d3.select(this).on("mouseover", boundMof);
+			});
+
+	  	// Revert view of root data
+	  	this.setTextForCenterInfo(undefined, undefined, this.startIndividualId, true);
+	},
+	initializeBreadcrumbTrail: function initializeBreadcrumbTrail() {
+	  	// Add the svg area.
+	  	var trail = d3.select("#sequence").append("svg:svg")
+		  	.attr("width", this.width)
+		  	.attr("height", 50)
+		  	.attr("id", "trail");
+
+	  	trail.append("svg:text")
+			.attr("id", "endlabel")
+			.style("fill", "#000");
+	},
+	breadcrumbPoints: function breadcrumbPoints(d, i) {
+	  	var points = [];
+	  	points.push("0,0");
+	  	points.push(this.b.w + ",0");
+	  	points.push(this.b.w + this.b.t + "," + (this.b.h / 2));
+	  	points.push(this.b.w + "," + this.b.h);
+	  	points.push("0," + this.b.h);
+	  	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
+			points.push(this.b.t + "," + (this.b.h / 2));
+	  	}
+	  	return points.join(" ");
+	},
+	updateBreadcrumbs: function updateBreadcrumbs(nodeArray) {
+		var that = this;
+	  	var g = d3.select("#trail")
+		  	.selectAll("g")
+		  	.data(nodeArray, function(d) {
+		  		return that.getTextForBreadcrumb(d, undefined, undefined);
+		  	});
+
+	  	// Add breadcrumb and label for entering nodes.
+	  	var entering = g.enter().append("svg:g");
+
+		let bcp = this.breadcrumbPoints;
+		let boundBcp = bcp.bind(this);
+
+	  	entering.append("svg:polygon")
+		  	.attr("points", boundBcp)
+		  	.style("fill", function(d) {
+		  		return d.color;
+		  	});
+
+		let gtfb = this.getTextForBreadcrumb;
+		let boundGtfb = gtfb.bind(this);
+
+	  	entering.append("svg:text")
+		  	.attr("x", (this.b.w + this.b.t) / 2)
+		  	.attr("y", this.b.h / 2)
+		  	.attr("dy", "0.35em")
+		  	.attr("text-anchor", "middle")
+		  	.text(function(d) {
+		  		return boundGtfb(d, undefined, undefined);
+		  	});
+
+	  	// Set position for entering and updating nodes.
+	  	g.attr("transform", function(d, i) {
+			return "translate(" + i * (that.b.w + that.b.s) + ", 0)";
+	  	});
+
+	  	// Remove exiting nodes.
+	  	g.exit().remove();
+
+	  	// Make the breadcrumb trail visible, if it's hidden.
+	  	d3.select("#trail").style("visibility", "");
+	},
+
+	buildHierarchyArray: function buildHierarchyArray(startIndividualId) {
+		var indiv = ACJ.Helper.getIndividual(this.acJSONObj, startIndividualId);
+		var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
+		indivNode.data = indiv;
+
+		this.getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
+
+		this.hierarchyArray = indivNode;
+	},
+	getChildNodes: function getChildNodes(indiv, indivNode, size, first, parentColor) {
+		var famId = ACJ.Helper.getFamilyId(this.acJSONObj, indiv.id);
+		if(famId === undefined) {
+			return undefined;
+		}
+
+		var fam = ACJ.Helper.getFamily(this.acJSONObj, famId);
+		if(fam !== undefined) {
+			var mother = ACJ.Helper.getIndividual(this.acJSONObj, fam.wifeId);
+			var father = ACJ.Helper.getIndividual(this.acJSONObj, fam.husbandId);
+
+			if(mother !== undefined) {
+				var color = first ? "#490000" : (function(c) {
+					var R = hexToR(c), G = hexToG(c), B = hexToB(c);
+					return rgbToHex(R, G + 30, B);
+				})(parentColor);
+				var newNode = {"data": {}, "children": [], "size": size, "color": color}
+				newNode.data = mother;
+				this.getChildNodes(mother, newNode, size / 2, false, color);
+				indivNode.children.push(newNode);
+			}
+			if(father !== undefined) {
+				var color = first ? "#004900" : (function(c) {
+					var R = hexToR(c), G = hexToG(c), B = hexToB(c);
+					return rgbToHex(R, G, B + 30);
+				})(parentColor);
+				var newNode = {"data": {}, "children": [], "size": size, "color": color}
+				newNode.data = father;
+				this.getChildNodes(father, newNode, size / 2, false, color);
+				indivNode.children.push(newNode);
+			}
+		}
+
+		return indivNode;
+	},
+	getAncestors: function getAncestors(node) {
+	  	var path = [];
+	  	var current = node;
+	  	while (current.parent) {
+			path.unshift(current);
+			current = current.parent;
+	  	}
+
+	  	// And once again, because root should be always the first breadcrumb node
+	  	path.unshift(current);
+
+	  	return path;
+	},
+	setTextForCenterInfo: function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
+		var individual = undefined;
+
+		// Individual ermitteln
+		if(d3d !== undefined) {
+			individual = d3d.data;
+		}
+		else if(indiv !== undefined) {
+			individual = indiv;
+		}
+		else if(indivId !== undefined) {
+			for(var i = 0; i < this.acJSONObj.individuals.length; i++) {
+				if(this.acJSONObj.individuals[i].id === indivId) {
+					individual = this.acJSONObj.individuals[i];
+				}
+			}
+		}
+
+		if(individual === undefined) {
+			return 'Person konnte nicht ermittelt werden!'
+		}
+
+		document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
+
+		// Events dieser Person ermitteln
+		var individualEvents = [];
+		for(var i = 0; i < this.acJSONObj.events.length; i++) {
+			if(this.acJSONObj.events[i].individualId === individual.id) {
+				individualEvents.push(this.acJSONObj.events[i]);
+			}
+		}
+
+		// Daten schreiben wenn vorhanden
+		var birth = '', death = '';
+		for(var i = 0; i < individualEvents.length; i++) {
+			if(individualEvents[i].eventTypeId === 1){
+				birth = individualEvents[i].date;
+			}
+			else if(individualEvents[i].eventTypeId === 5){
+				death = individualEvents[i].date;
+			}
+		}
+
+		document.getElementById("dates").innerHTML = (birth ? birth.substring(birth.length - 4) : '') + ' - ' + (death ? death.substring(death.length - 4) : '');
+
+		// Links zu Kindern setzen
+		this.removeChildLinks();
+		if(createChildLinks) {
+			this.findAndSetChildLinks(individual.id);
+		}
+	},
+	getTextForBreadcrumb: function getTextForBreadcrumb(d3d, indiv, indivId) {
+		var individual = undefined;
+
+		if(d3d !== undefined) {
+			individual = d3d.data;
+		}
+		else if(indiv !== undefined) {
+			individual = indiv;
+		}
+		else if(indivId !== undefined) {
+			for(var i = 0; i < this.acJSONObj.individuals.length; i++) {
+				if(this.acJSONObj.individuals[i].id === indivId) {
+					individual = this.acJSONObj.individuals[i];
+				}
+			}
+		}
+
+		if(individual === undefined) {
+			return 'XXX'
+		}
+
+		if(countOfCharInStr(individual.preNames, ' ') >= 1) {
+			return individual.preNames.substring(0, individual.preNames.indexOf(' ') + 2) + '. ' + individual.lastNames_Birth;
+		}
+
+		return individual.preNames + ' ' + individual.lastNames_Birth;
+	},
+	removeChildLinks: function removeChildLinks() {
+		var cont = document.getElementById('explanation');
+		var links = document.getElementsByClassName('uplink');
+
+		while(links[0]) {
+		   links[0].parentNode.removeChild(links[0]);
+		}
+	},
+	findAndSetChildLinks: function findAndSetChildLinks(parentId) {
+		var family = undefined;
+		for(var i = 0; i < this.acJSONObj.families.length; i++) {
+			if(this.acJSONObj.families[i].husbandId === parentId || this.acJSONObj.families[i].wifeId === parentId) {
+				family = this.acJSONObj.families[i];
+			}
+		}
+
+		if(family === undefined) {
+			return;
+		}
+
+		var children = [];
+		for(var i = 0; i < this.acJSONObj.children.length; i++) {
+			if(this.acJSONObj.children[i].familyId === family.id) {
+				children.push(this.acJSONObj.children[i]);
+			}
+		}
+
+		if(children.length > 0) {
+			var cont = document.getElementById('explanation');
+
+			for(var i = 0; i < children.length; i++) {
+				var a = document.createElement('a');
+				a.id = children[i].individualId;
+				a.href = '#';
+				a.innerHTML = 'Gehe zu ' + this.getTextForBreadcrumb(undefined, undefined, children[i].individualId);
+				a.className = 'uplink';
+				a.addEventListener('click', this.setChildAsRoot, false);
+
+				cont.appendChild(a);
+			}
+		}
+	},
+	setChildAsRoot: function setChildAsRoot(e) {
+		this.startIndividualId = e.currentTarget.id;
+		refreshVis();
+	},
+};
+ACJ.Vis.SunburstDefault = {
 	acJSONObj: {},
 	hierarchyArray: {},
 	startIndividualId: 'I1',
@@ -406,337 +741,24 @@ ACJ.Vis.Sunburst = {
 	radius: Math.min(document.body.clientWidth, document.body.clientHeight - 60) / 2.0,
 	b: { w: 150, h: 30, s: 3, t: 10 },
 	totalSize: 0,
-};
-
-ACJ.Vis.Sunburst.vis = undefined;
-ACJ.Vis.Sunburst.partition = d3.layout.partition()
-	.size([2 * Math.PI, ACJ.Vis.Sunburst.radius * ACJ.Vis.Sunburst.radius])
-	.value(function(d) { return d.size; });
-ACJ.Vis.Sunburst.arc = d3.svg.arc()
-	.startAngle(function(d) { return d.x; })
-	.endAngle(function(d) { return d.x + d.dx; })
-	.innerRadius(function(d) { return Math.sqrt(d.y); })
-	.outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
-
-ACJ.Vis.Sunburst.createVisualization = function() {
-  	// For efficiency, filter nodes to keep only those large enough to see.
-  	var nodes = ACJ.Vis.Sunburst.partition.nodes(ACJ.Vis.Sunburst.hierarchyArray)
-	  	.filter(function(d) {
-	  		return (d.dx > 0.005); // 0.005 radians = 0.29 degrees
-	  	});
-
-  	var path = ACJ.Vis.Sunburst.vis.data([ACJ.Vis.Sunburst.hierarchyArray]).selectAll("path")
-	  	.data(nodes)
-	  	.enter().append("svg:path")
-	  	.attr("display", function(d) { return d.depth ? null : "none"; })
-	  	.attr("d", ACJ.Vis.Sunburst.arc)
-	  	.attr("fill-rule", "evenodd")
-	  	.style("fill", function(d) { return d.color; })
-	  	.style("opacity", 1)
-	  	.on("mouseover", ACJ.Vis.Sunburst.mouseover)
-	  	.on("click", ACJ.Vis.Sunburst.click);
-
-  	// Add the mouseleave handler to the bounding circle.
-  	d3.select("#container").on("mouseleave", ACJ.Vis.Sunburst.mouseleave);
-
-  	var exp = document.getElementById("explanation");
-  	exp.style.width = '200px';
-  	exp.style.height = '200px';
-	exp.style.left = (ACJ.Vis.Sunburst.width / 2 - 100) + 'px';
-	exp.style.top = (ACJ.Vis.Sunburst.height / 2 - 100) + 'px';
-
-	// Get total size of the tree = value of root node from partition.
-  	ACJ.Vis.Sunburst.totalSize = path.node().__data__.value;
-};
-ACJ.Vis.Sunburst.setInitialData = function() {
-	// Initial view of root data
-  	ACJ.Vis.Sunburst.setTextForCenterInfo(ACJ.Vis.Sunburst.hierarchyArray, undefined, undefined, true);
-};
-
-ACJ.Vis.Sunburst.click = function(d) {
-	ACJ.Vis.Sunburst.startIndividualId = d.data.id;
-	refreshVis();
+	vis: undefined,
 }
-ACJ.Vis.Sunburst.mouseover = function(d) {
-	ACJ.Vis.Sunburst.setTextForCenterInfo(d, undefined, undefined, false);
+ACJ.Vis.SunburstFactory = function SunburstFactory(options) {
+	let newObj = Object.assign(Object.create(ACJ.Vis.SunburstProto), ACJ.Vis.SunburstDefault, options);
 
-  	var sequenceArray = ACJ.Vis.Sunburst.getAncestors(d);
-  	ACJ.Vis.Sunburst.updateBreadcrumbs(sequenceArray);
+	newObj.partition = d3.layout.partition()
+		.size([2 * Math.PI, newObj.radius * newObj.radius])
+		.value(function(d) { return d.size; });
 
-  	// Fade all the segments.
-  	d3.selectAll("path").style("opacity", 0.3);
+	newObj.arc = d3.svg.arc()
+		.startAngle(function(d) { return d.x; })
+		.endAngle(function(d) { return d.x + d.dx; })
+		.innerRadius(function(d) { return Math.sqrt(d.y); })
+		.outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
 
-  	// Then highlight only those that are an ancestor of the current segment.
-  	ACJ.Vis.Sunburst.vis.selectAll("path")
-	  	.filter(function(node) {
-			return (sequenceArray.indexOf(node) >= 0);
-		})
-	  	.style("opacity", 1);
-};
-ACJ.Vis.Sunburst.mouseleave = function(d) {
-  	// Hide the breadcrumb trail
-  	d3.select("#trail").style("visibility", "hidden");
-
-  	// Deactivate all segments during transition.
-  	d3.selectAll("path").on("mouseover", null);
-
-  	// Transition each segment to full opacity and then reactivate it.
-  	d3.selectAll("path")
-	  	.transition()
-	  	.duration(250)
-	  	.style("opacity", 1)
-	  	.each("end", function() {
-			d3.select(this).on("mouseover", ACJ.Vis.Sunburst.mouseover);
-		});
-
-  	// Revert view of root data
-  	ACJ.Vis.Sunburst.setTextForCenterInfo(undefined, undefined, ACJ.Vis.Sunburst.startIndividualId, true);
-};
-
-ACJ.Vis.Sunburst.initializeBreadcrumbTrail = function() {
-  	// Add the svg area.
-  	var trail = d3.select("#sequence").append("svg:svg")
-	  	.attr("width", ACJ.Vis.Sunburst.width)
-	  	.attr("height", 50)
-	  	.attr("id", "trail");
-
-  	trail.append("svg:text")
-		.attr("id", "endlabel")
-		.style("fill", "#000");
-};
-ACJ.Vis.Sunburst.breadcrumbPoints = function(d, i) {
-  	var points = [];
-  	points.push("0,0");
-  	points.push(ACJ.Vis.Sunburst.b.w + ",0");
-  	points.push(ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.t + "," + (ACJ.Vis.Sunburst.b.h / 2));
-  	points.push(ACJ.Vis.Sunburst.b.w + "," + ACJ.Vis.Sunburst.b.h);
-  	points.push("0," + ACJ.Vis.Sunburst.b.h);
-  	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
-		points.push(ACJ.Vis.Sunburst.b.t + "," + (ACJ.Vis.Sunburst.b.h / 2));
-  	}
-  	return points.join(" ");
-};
-ACJ.Vis.Sunburst.updateBreadcrumbs = function(nodeArray) {
-  	var g = d3.select("#trail")
-	  	.selectAll("g")
-	  	.data(nodeArray, function(d) {
-	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined);
-	  	});
-
-  	// Add breadcrumb and label for entering nodes.
-  	var entering = g.enter().append("svg:g");
-
-  	entering.append("svg:polygon")
-	  	.attr("points", ACJ.Vis.Sunburst.breadcrumbPoints)
-	  	.style("fill", function(d) {
-	  		return d.color;
-	  	});
-
-  	entering.append("svg:text")
-	  	.attr("x", (ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.t) / 2)
-	  	.attr("y", ACJ.Vis.Sunburst.b.h / 2)
-	  	.attr("dy", "0.35em")
-	  	.attr("text-anchor", "middle")
-	  	.text(function(d) {
-	  		return ACJ.Vis.Sunburst.getTextForBreadcrumb(d, undefined, undefined);
-	  	});
-
-  	// Set position for entering and updating nodes.
-  	g.attr("transform", function(d, i) {
-		return "translate(" + i * (ACJ.Vis.Sunburst.b.w + ACJ.Vis.Sunburst.b.s) + ", 0)";
-  	});
-
-  	// Remove exiting nodes.
-  	g.exit().remove();
-
-  	// Make the breadcrumb trail visible, if it's hidden.
-  	d3.select("#trail").style("visibility", "");
-};
-
-// Sunburst Visualisation helper functions ////////////////////////////////////////////////////////////////////
-ACJ.Vis.Sunburst.buildHierarchyArray = function(startIndividualId) {
-	var indiv = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, startIndividualId);
-	var indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
-	indivNode.data = indiv;
-
-	ACJ.Vis.Sunburst.getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
-
-	ACJ.Vis.Sunburst.hierarchyArray = indivNode;
-};
-ACJ.Vis.Sunburst.getChildNodes = function(indiv, indivNode, size, first, parentColor) {
-	var famId = ACJ.Helper.getFamilyId(ACJ.Vis.Sunburst.acJSONObj, indiv.id);
-	if(famId === undefined) {
-		return undefined;
-	}
-
-	var fam = ACJ.Helper.getFamily(ACJ.Vis.Sunburst.acJSONObj, famId);
-	if(fam !== undefined) {
-		var mother = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, fam.wifeId);
-		var father = ACJ.Helper.getIndividual(ACJ.Vis.Sunburst.acJSONObj, fam.husbandId);
-
-		if(mother !== undefined) {
-			var color = first ? "#490000" : (function(c) {
-				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
-				return rgbToHex(R, G + 30, B);
-			})(parentColor);
-			var newNode = {"data": {}, "children": [], "size": size, "color": color}
-			newNode.data = mother;
-			ACJ.Vis.Sunburst.getChildNodes(mother, newNode, size / 2, false, color);
-			indivNode.children.push(newNode);
-		}
-		if(father !== undefined) {
-			var color = first ? "#004900" : (function(c) {
-				var R = hexToR(c), G = hexToG(c), B = hexToB(c);
-				return rgbToHex(R, G, B + 30);
-			})(parentColor);
-			var newNode = {"data": {}, "children": [], "size": size, "color": color}
-			newNode.data = father;
-			ACJ.Vis.Sunburst.getChildNodes(father, newNode, size / 2, false, color);
-			indivNode.children.push(newNode);
-		}
-	}
-
-	return indivNode;
+   return newObj;
 }
-ACJ.Vis.Sunburst.getAncestors = function(node) {
-  	var path = [];
-  	var current = node;
-  	while (current.parent) {
-		path.unshift(current);
-		current = current.parent;
-  	}
 
-  	// And once again, because root should be always the first breadcrumb node
-  	path.unshift(current);
-
-  	return path;
-};
-
-ACJ.Vis.Sunburst.setTextForCenterInfo = function(d3d, indiv, indivId, createChildLinks) {
-	var individual = undefined;
-
-	// Individual ermitteln
-	if(d3d !== undefined) {
-		individual = d3d.data;
-	}
-	else if(indiv !== undefined) {
-		individual = indiv;
-	}
-	else if(indivId !== undefined) {
-		for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.individuals.length; i++) {
-			if(ACJ.Vis.Sunburst.acJSONObj.individuals[i].id === indivId) {
-				individual = ACJ.Vis.Sunburst.acJSONObj.individuals[i];
-			}
-		}
-	}
-
-	if(individual === undefined) {
-		return 'Person konnte nicht ermittelt werden!'
-	}
-
-	document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
-
-	// Events dieser Person ermitteln
-	var individualEvents = [];
-	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.events.length; i++) {
-		if(ACJ.Vis.Sunburst.acJSONObj.events[i].individualId === individual.id) {
-			individualEvents.push(ACJ.Vis.Sunburst.acJSONObj.events[i]);
-		}
-	}
-
-	// Daten schreiben wenn vorhanden
-	var birth = '', death = '';
-	for(var i = 0; i < individualEvents.length; i++) {
-		if(individualEvents[i].eventTypeId === 1){
-			birth = individualEvents[i].date;
-		}
-		else if(individualEvents[i].eventTypeId === 5){
-			death = individualEvents[i].date;
-		}
-	}
-
-	document.getElementById("dates").innerHTML = birth.substring(birth.length - 4) + ' - ' + death.substring(death.length - 4);
-
-	// Links zu Kindern setzen
-	ACJ.Vis.Sunburst.removeChildLinks();
-	if(createChildLinks) {
-		ACJ.Vis.Sunburst.findAndSetChildLinks(individual.id);
-	}
-};
-ACJ.Vis.Sunburst.getTextForBreadcrumb = function(d3d, indiv, indivId) {
-	var individual = undefined;
-
-	if(d3d !== undefined) {
-		individual = d3d.data;
-	}
-	else if(indiv !== undefined) {
-		individual = indiv;
-	}
-	else if(indivId !== undefined) {
-		for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.individuals.length; i++) {
-			if(ACJ.Vis.Sunburst.acJSONObj.individuals[i].id === indivId) {
-				individual = ACJ.Vis.Sunburst.acJSONObj.individuals[i];
-			}
-		}
-	}
-
-	if(individual === undefined) {
-		return 'XXX'
-	}
-
-	if(countOfCharInStr(individual.preNames, ' ') >= 1) {
-		return individual.preNames.substring(0, individual.preNames.indexOf(' ') + 2) + '. ' + individual.lastNames_Birth;
-	}
-
-	return individual.preNames + ' ' + individual.lastNames_Birth;
-};
-
-ACJ.Vis.Sunburst.removeChildLinks = function() {
-	var cont = document.getElementById('explanation');
-	var links = document.getElementsByClassName('uplink');
-
-	while(links[0]) {
-	   links[0].parentNode.removeChild(links[0]);
-	}
-}
-ACJ.Vis.Sunburst.findAndSetChildLinks = function(parentId) {
-	var family = undefined;
-	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.families.length; i++) {
-		if(ACJ.Vis.Sunburst.acJSONObj.families[i].husbandId === parentId || ACJ.Vis.Sunburst.acJSONObj.families[i].wifeId === parentId) {
-			family = ACJ.Vis.Sunburst.acJSONObj.families[i];
-		}
-	}
-
-	if(family === undefined) {
-		return;
-	}
-
-	var children = [];
-	for(var i = 0; i < ACJ.Vis.Sunburst.acJSONObj.children.length; i++) {
-		if(ACJ.Vis.Sunburst.acJSONObj.children[i].familyId === family.id) {
-			children.push(ACJ.Vis.Sunburst.acJSONObj.children[i]);
-		}
-	}
-
-	if(children.length > 0) {
-		var cont = document.getElementById('explanation');
-
-		for(var i = 0; i < children.length; i++) {
-			var a = document.createElement('a');
-			a.id = children[i].individualId;
-			a.href = '#';
-			a.innerHTML = 'Gehe zu ' + ACJ.Vis.Sunburst.getTextForBreadcrumb(undefined, undefined, children[i].individualId);
-			a.className = 'uplink';
-			a.addEventListener('click', ACJ.Vis.Sunburst.setChildAsRoot, false);
-
-			cont.appendChild(a);
-		}
-	}
-};
-ACJ.Vis.Sunburst.setChildAsRoot = function(e) {
-	ACJ.Vis.Sunburst.startIndividualId = e.currentTarget.id;
-	refreshVis();
-};
 
 // String helper functions ///////////////////////////////////////////////////////////////////////////
 function pad(value, length) {
