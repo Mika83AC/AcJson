@@ -3,13 +3,13 @@
 // Namespaces /////////////////////////////////////////////////////////////////////////////////////////////////////////
 var ACJ = ACJ || {};
 ACJ.Conv = ACJ.Conv || {};
+ACJ.Helper = ACJ.Helper || {};
 ACJ.Vis = ACJ.Vis || {};
 ACJ.Vis.Sunburst = ACJ.Vis.Sunburst || {};
 ACJ.Vis.Triangle = ACJ.Vis.Triangle || {};
-ACJ.Helper = ACJ.Helper || {};
 
 // Classes for ACJ format //////////////////////////////////////////////////////////////////////////////////////////
-var IndividualProto = {
+ACJ.IndividualProto = {
 	id: '',
 	preNames: '',
 	lastNames_Birth: '',
@@ -18,32 +18,32 @@ var IndividualProto = {
 	memo: '',
 	familySearchOrgId: ''
 }
-var IndividualFactory = function IndividualFactory(options) {
-   return Object.assign(Object.create(IndividualProto), options);
+ACJ.IndividualFactory = function IndividualFactory(options) {
+   return Object.assign(Object.create(ACJ.IndividualProto), options);
 }
 
-var FamilyProto = {
+ACJ.FamilyProto = {
 	id: '',
 	familySearchOrgId: '',
 	husbandId: '',
 	wifeId: '',
 	memo: ''
 }
-var FamilyFactory = function FamilyFactory(options) {
-   return Object.assign(Object.create(IndividualProto), options);
+ACJ.FamilyFactory = function FamilyFactory(options) {
+   return Object.assign(Object.create(ACJ.IndividualProto), options);
 }
 
-var ChildProto = {
+ACJ.ChildProto = {
 	id: '',
 	individualId: '',
 	familyId: '',
 	memo: ''
 }
-var ChildFactory = function ChildFactory(options) {
-   return Object.assign(Object.create(ChildProto), options);
+ACJ.ChildFactory = function ChildFactory(options) {
+   return Object.assign(Object.create(ACJ.ChildProto), options);
 }
 
-var EventProto = {
+ACJ.EventProto = {
 	id: '',
 	eventTypeId: 0,
 	individualId: '',
@@ -52,11 +52,11 @@ var EventProto = {
 	place: '',
 	memo: ''
 }
-var EventFactory = function EventFactory(options) {
-   return Object.assign(Object.create(EventProto), options);
+ACJ.EventFactory = function EventFactory(options) {
+   return Object.assign(Object.create(ACJ.EventProto), options);
 }
 
-var MediaProto = {
+ACJ.MediaProto = {
 	id: '',
 	mediaTypeId: 0,
 	individualId: '',
@@ -65,39 +65,30 @@ var MediaProto = {
 	place: '',
 	memo: ''
 }
-var MediaFactory = function MediaFactory(options) {
-   return Object.assign(Object.create(MediaProto), options);
+ACJ.MediaFactory = function MediaFactory(options) {
+   return Object.assign(Object.create(ACJ.MediaProto), options);
 }
 
 // Converter functions ////////////////////////////////////////////////////////////////////////////////////////////
 ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
-	var lines = gedcomData.split('\n');
-	var lastCommandSection = "";
-	var lastCommandLine = "";
+	let lines = gedcomData.split('\n');
+	let lastCommandSection = "", lastCommandLine = "";
 
-	var nextEventId = 1;
-	var nextChildId = 1;
+	let nextEventId = 1, nextChildId = 1;
 
-	var individuals = [], families = [], events = [], children = [];
-	var individual = undefined, family = undefined, event = undefined, child = undefined;
-	var gedcomMarkerFound = false;
+	let individuals = [], families = [], events = [], children = [];
+	let individual = undefined, family = undefined, event = undefined, child = undefined;
+	let gedcomMarkerFound = false;
 
-	for(var row = 0; row < lines.length; row++){
-		var line = lines[row];
+	lines.forEach(line => {
 		line = line.replace("\r", "");
 
-		if(line.startsWith("1 GEDC")) {
-			gedcomMarkerFound = true;
-		}
+		if(line.startsWith("1 GEDC")) gedcomMarkerFound = true;
 
 		// Individual
 		if(line.startsWith("0") && line.endsWith("INDI")) {
-			individual = IndividualFactory();
+			individual = ACJ.IndividualFactory();
 			individual.id = line.substring(3).replace(" INDI", "").replace("@", "");
-
-			if(individual.id === "I80") {
-				var x = "";
-			}
 
 			lastCommandSection = "INDI";
 		}
@@ -114,7 +105,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
+			event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 BIRT") && line.startsWith("2 PLAC")) {
@@ -124,7 +115,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
+				event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 1, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -137,7 +128,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
+			event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 CHR") && line.startsWith("2 PLAC")) {
@@ -147,7 +138,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
+				event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 2, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -160,7 +151,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
+			event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "INDI" && lastCommandLine.startsWith("1 DEAT") && line.startsWith("2 PLAC")) {
@@ -170,7 +161,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
+				event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 5, individualId: individual.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -194,7 +185,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				families.push(family);
 			}
 
-			family = FamilyFactory();
+			family = ACJ.FamilyFactory();
 			family.id = line.substring(3).replace(" FAM", "").replace("@", "");
 
 			lastCommandSection = "FAM";
@@ -206,10 +197,8 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 			family.wifeId = line.substring(("1 WIFE").length + 1).replace("@", "").replace("@", "");
 		}
 		if (lastCommandSection === "FAM" && line.startsWith("1 CHIL")) {
-			child = ChildFactory();
-			child.id = 'C' + nextChildId++;
+			child = ACJ.ChildFactory({id: 'C' + nextChildId++, familyId: family.id});
 			child.individualId = line.substring(("1 CHIL").length + 1).replace("@", "").replace("@", "");
-			child.familyId = family.id;
 
 			children.push(child);
 		}
@@ -219,7 +208,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 				event = undefined;
 			}
 
-			event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
+			event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
 			event.date = line.substring(("2 DATE").length + 1);
 		}
 		if(lastCommandSection == "FAM" && lastCommandLine.startsWith("1 MARR") && line.startsWith("2 PLAC")) {
@@ -229,7 +218,7 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 					event = undefined;
 				}
 
-				event = EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
+				event = ACJ.EventFactory({id: 'E' + nextEventId++, eventTypeId: 3, familyId: family.id});
 			}
 
 			event.place = line.substring(("2 PLAC").length + 1);
@@ -242,20 +231,14 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 		}
 
 		// CommandLine merken
-		if (line.startsWith("1 ")) {
-			lastCommandLine = line;
-		}
-	}
+		if (line.startsWith("1 ")) lastCommandLine = line;
+	});
 
 	if(!gedcomMarkerFound) {
 		alert('In the choosen file, there are no GEDCOM header informations present.\rIt is very likely that the file can\'t be processed correctly!');
 	}
 
-	var obj = {};
-	obj.individuals = individuals;
-	obj.families = families;
-	obj.children = children;
-	obj.events = events;
+	let obj = {individuals: individuals, families: families, children: children, events: events};
 
 	nextEventId = 1;
 	nextChildId = 1;
@@ -263,39 +246,36 @@ ACJ.Conv.GEDCOMtoACJSON = function(gedcomData) {
 	return JSON.stringify(obj);
 };
 ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
-	var lb = "\r\n";
-	var data = JSON.parse(acJSONObj);
-	var gedStr = "0 HEAD" + lb;
+	let lb = "\r\n";
+	let data = JSON.parse(acJSONObj);
+	let gedStr = "0 HEAD" + lb;
 	gedStr += "1 CHAR UTF-8" + lb;
 	gedStr += "1 GEDC" + lb;
 	gedStr += "2 VERS 5.5" + lb;
 	gedStr += "2 FORM LINEAGE-LINKED" + lb;
 
 	// Individuals
-	for(var i = 0; i < data.individuals.length; i++) {
-		gedStr += "0 @" + data.individuals[i].id + "@ INDI" + lb;
-		gedStr += "1 NAME " + data.individuals[i].preNames + " /" + data.individuals[i].lastNames_Birth + "/" + lb;
-		gedStr += "1 SEX " + (data.individuals[i].sexId === 1 ? "M" : "F") + lb;
+	data.individuals.forEach(individual => {
+		gedStr += "0 @" + individual.id + "@ INDI" + lb;
+		gedStr += "1 NAME " + individual.preNames + " /" + individual.lastNames_Birth + "/" + lb;
+		gedStr += "1 SEX " + (individual.sexId === 1 ? "M" : "F") + lb;
 
-		var birth = undefined, baptism = undefined, death = undefined;
-		for(var j = 0; j < data.events.length; j++) {
-			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 1) {
-				birth = data.events[j];
+		let birth = undefined, baptism = undefined, death = undefined;
+
+		for(let event of data.events) {
+			if(event.individualId === individual.id && event.eventTypeId === 1) {
+				birth = event;
 			}
-			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 2) {
-				baptism = data.events[j];
+			if(event.individualId === individual.id && event.eventTypeId === 2) {
+				baptism = event;
 			}
-			if(data.events[j].individualId === data.individuals[i].id && data.events[j].eventTypeId === 5) {
-				death = data.events[j];
+			if(event.individualId === individual.id && event.eventTypeId === 5) {
+				death = event;
 			}
 
 			if(birth !== undefined && baptism !== undefined && death !== undefined) {
 				break;
 			}
-		}
-
-		if(data.individuals[i].id === "I11") {
-			var x = "";
 		}
 
 		if(birth !== undefined) {
@@ -329,49 +309,48 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 			}
 		}
 
-		for(var k = 0; k < data.families.length; k ++) {
-			if(data.families[k].husbandId === data.individuals[i].id || data.families[k].wifeId === data.individuals[i].id) {
-				gedStr += "1 FAMS @" + data.families[k].id + "@" + lb;
+		data.families.forEach(family => {
+			if(family.husbandId === individual.id || family.wifeId === individual.id) {
+				gedStr += "1 FAMS @" + family.id + "@" + lb;
 			}
-		}
+		});
 
-		for(var l = 0; l < data.children.length; l ++) {
-			if(data.children[l].individualId === data.individuals[i].id) {
-				gedStr += "1 FAMC @" + data.children[l].familyId + "@" + lb;
-				break;
+		data.children.forEach(child => {
+			if(child.individualId === individual.id) {
+				gedStr += "1 FAMC @" + child.familyId + "@" + lb;
 			}
-		}
+		});
 
-		if(data.individuals[i].familySearchOrgId !== undefined) {
-			gedStr += "1 _FSFTID " + data.individuals[i].familySearchOrgId + lb;
+		if(individual.familySearchOrgId !== undefined) {
+			gedStr += "1 _FSFTID " + individual.familySearchOrgId + lb;
 		}
-	}
+	});
 
 	// Familien
-	for(var i = 0; i < data.families.length; i++) {
-		gedStr += "0 @" + data.families[i].id + "@ FAM" + lb;
+	data.families.forEach(family => {
+		gedStr += "0 @" + family.id + "@ FAM" + lb;
 
-		if(data.families[i].husbandId !== undefined) {
-			gedStr += "1 HUSB @" + data.families[i].husbandId + "@" + lb;
+		if(family.husbandId !== undefined) {
+			gedStr += "1 HUSB @" + family.husbandId + "@" + lb;
 		}
 
-		if(data.families[i].wifeId !== undefined) {
-			gedStr += "1 WIFE @" + data.families[i].wifeId + "@" + lb;
+		if(family.wifeId !== undefined) {
+			gedStr += "1 WIFE @" + family.wifeId + "@" + lb;
 		}
 
-		for(var j = 0; j < data.children.length; j++) {
-			if(data.children[j].familyId === data.families[i].id) {
-				gedStr += "1 CHIL @" + data.children[j].individualId + "@" + lb;
+		data.children.forEach(child => {
+			if(child.familyId === family.id) {
+				gedStr += "1 CHIL @" + child.individualId + "@" + lb;
 			}
-		}
+		});
 
 		var marriage = undefined, divore = undefined;
-		for(var j = 0; j < data.events.length; j++) {
-			if(data.events[j].familyId === data.families[i].id && data.events[j].eventTypeId === 3) {
-				marriage = data.events[j];
+		for(let event of data.events) {
+			if(event.familyId === family.id && event.eventTypeId === 3) {
+				marriage = event;
 			}
-			if(data.events[j].familyId === data.families[i].id && data.events[j].eventTypeId === 4) {
-				divore = data.events[j];
+			if(event.familyId === family.id && event.eventTypeId === 4) {
+				divore = event;
 			}
 
 			if(marriage !== undefined && divore !== undefined) {
@@ -392,10 +371,10 @@ ACJ.Conv.ACJSONtoGEDCOM = function(acJSONObj) {
 
 		// Divorces are not part of the GEDCOM format
 
-		if(data.families[i].familySearchOrgId !== undefined) {
-			gedStr += "1 _FSFTID " + data.families[i].familySearchOrgId + lb;
+		if(family.familySearchOrgId !== undefined) {
+			gedStr += "1 _FSFTID " + family.familySearchOrgId + lb;
 		}
-	}
+	});
 
 	gedStr += "0 TRLR" + lb;
 	return gedStr;
