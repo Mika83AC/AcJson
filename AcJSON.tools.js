@@ -402,14 +402,9 @@ ACJ.Vis.SunburstProto = {
 		let nodes = this.partition.nodes(this.hierarchyArray)
 			.filter(d => d.dx > 0.005); // 0.005 radians = 0.29 degrees
 
-		let cli = this.click;
-		let boundCli = cli.bind(this);
-
-		let mouseo = this.mouseover;
-		let boundMouseo = mouseo.bind(this);
-
-		let mousel = this.mouseleave;
-		let boundMousel = mousel.bind(this);
+		let boundCli = this.click.bind(this);
+		let boundMouseo = this.mouseover.bind(this);
+		let boundMousel = this.mouseleave.bind(this);
 
 		let path = this.vis.data([this.hierarchyArray]).selectAll("path")
 			.data(nodes)
@@ -463,8 +458,7 @@ ACJ.Vis.SunburstProto = {
 	  	// Deactivate all segments during transition.
 	  	d3.selectAll("path").on("mouseover", null);
 
-		let mof = this.mouseover;
-		let boundMof = mof.bind(this);
+		let boundMof = this.mouseover.bind(this);
 
 	  	// Transition each segment to full opacity and then reactivate it.
 	  	d3.selectAll("path")
@@ -510,15 +504,13 @@ ACJ.Vis.SunburstProto = {
 	  	// Add breadcrumb and label for entering nodes.
 	  	let entering = g.enter().append("svg:g");
 
-		let bcp = this.breadcrumbPoints;
-		let boundBcp = bcp.bind(this);
+		let boundBcp = this.breadcrumbPoints.bind(this);
 
 	  	entering.append("svg:polygon")
 		  	.attr("points", boundBcp)
 		  	.style("fill", d => d.color);
 
-		let gtfb = this.getTextForBreadcrumb;
-		let boundGtfb = gtfb.bind(this);
+		let boundGtfb = this.getTextForBreadcrumb.bind(this);
 
 	  	entering.append("svg:text")
 		  	.attr("x", (this.b.w + this.b.t) / 2)
@@ -698,8 +690,7 @@ ACJ.Vis.SunburstProto = {
 		if(children.length > 0) {
 			let cont = document.getElementById('explanation');
 
-			let scar = this.setChildAsRoot;
-			let boundScar = scar.bind(this);
+			let boundScar = this.setChildAsRoot.bind(this);
 
 			for(let child of children) {
 				let a = document.createElement('a');
