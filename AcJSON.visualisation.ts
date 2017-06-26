@@ -18,7 +18,7 @@ function loadFile(evt: any) {
 		alert("Failed to load file");
 	}
 };
-function startVis() { 
+function startVis() {
 	sunburst.buildHierarchyArray(sunburst.startIndividualId);
 
 	sunburst.vis = d3.select("#chart").append("svg:svg")
