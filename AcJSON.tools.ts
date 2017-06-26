@@ -512,7 +512,12 @@ interface ISunburstProto {
 	setChildAsRoot: Function
 }
 const SunburstProto: ISunburstProto = {
-	acJSONObj: {},
+	acJSONObj: {
+		individuals: [],
+		families: [],
+		children: [],
+		events: []
+	},
 	hierarchyArray: {},
 	startIndividualId: 'I1',
 	width: document.body.clientWidth,
@@ -838,7 +843,7 @@ const SunburstProto: ISunburstProto = {
 	},
 };
 
-const SunburstFactory = function SunburstFactory(options: Object) {
+const SunburstFactory = function SunburstFactory(options?: Object) {
 	let newObj = Object.assign(Object.create(SunburstProto), options);
 
 	newObj.partition = d3.layout.partition()

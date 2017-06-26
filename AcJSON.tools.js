@@ -316,11 +316,13 @@ const ACJSONtoGEDCOM = function (acJSONObj) {
 };
 // ACJ helper functions ///////////////////////////////////////////////////////////////////////////////////////////
 const getIndividual = function (acJSONObj, individId) {
+    if (individId === undefined || individId.length === 0)
+        return;
     for (let individual of acJSONObj.individuals) {
         if (individId !== '' && individual.id === individId)
             return individual;
     }
-    return undefined;
+    return;
 };
 const getFamilyId = function (acJSONObj, indidivId, childId) {
     for (let child of acJSONObj.children) {
@@ -336,37 +338,47 @@ const getFamily = function (acJSONObj, familyId) {
     }
     return undefined;
 };
-// Sunburst Visualisation functions and variables ////////////////////////////////////////////////////////////////
-/*ACJ.Vis.SunburstProto = {
+const SunburstProto = {
+    acJSONObj: {
+        individuals: [],
+        families: [],
+        children: [],
+        events: []
+    },
+    hierarchyArray: {},
+    startIndividualId: 'I1',
+    width: document.body.clientWidth,
+    height: document.body.clientHeight - 60,
+    radius: Math.min(document.body.clientWidth, document.body.clientHeight - 60) / 2.0,
+    b: { w: 150, h: 30, s: 3, t: 10 },
+    totalSize: 0,
+    vis: undefined,
+    partition: undefined,
+    arc: undefined,
     createVisualization: function createVisualization() {
         // For efficiency, filter nodes to keep only those large enough to see.
         let nodes = this.partition.nodes(this.hierarchyArray)
-            .filter(d => d.dx > 0.005); // 0.005 radians = 0.29 degrees
-
+            .filter((d) => d.dx > 0.005); // 0.005 radians = 0.29 degrees
         let boundCli = this.click.bind(this);
         let boundMouseo = this.mouseover.bind(this);
         let boundMousel = this.mouseleave.bind(this);
-
         let path = this.vis.data([this.hierarchyArray]).selectAll("path")
             .data(nodes)
             .enter().append("svg:path")
-            .attr("display", d => d.depth ? null : "none")
+            .attr("display", (d) => d.depth ? null : "none")
             .attr("d", this.arc)
             .attr("fill-rule", "evenodd")
-            .style("fill", d => d.color)
+            .style("fill", (d) => d.color)
             .style("opacity", 1)
             .on("mouseover", boundMouseo)
             .on("click", boundCli);
-
         // Add the mouseleave handler to the bounding circle.
         d3.select("#container").on("mouseleave", boundMousel);
-
         let exp = document.getElementById("explanation");
         exp.style.width = '200px';
         exp.style.height = '200px';
         exp.style.left = (this.width / 2 - 100) + 'px';
         exp.style.top = (this.height / 2 - 100) + 'px';
-
         // Get total size of the tree = value of root node from partition.
         this.totalSize = path.node().__data__.value;
     },
@@ -380,36 +392,29 @@ const getFamily = function (acJSONObj, familyId) {
     },
     mouseover: function mouseover(d) {
         this.setTextForCenterInfo(d, undefined, undefined, false);
-
         let sequenceArray = this.getAncestors(d);
         this.updateBreadcrumbs(sequenceArray);
-
         // Fade all the segments.
         d3.selectAll("path").style("opacity", 0.3);
-
         // Then highlight only those that are an ancestor of the current segment.
         this.vis.selectAll("path")
-            .filter(node => sequenceArray.indexOf(node) >= 0)
+            .filter((node) => sequenceArray.indexOf(node) >= 0)
             .style("opacity", 1);
     },
     mouseleave: function mouseleave(d) {
         // Hide the breadcrumb trail
         d3.select("#trail").style("visibility", "hidden");
-
         // Deactivate all segments during transition.
         d3.selectAll("path").on("mouseover", null);
-
         let boundMof = this.mouseover.bind(this);
-
         // Transition each segment to full opacity and then reactivate it.
         d3.selectAll("path")
             .transition()
             .duration(250)
             .style("opacity", 1)
-            .each("end", function() {
-                d3.select(this).on("mouseover", boundMof);
-            });
-
+            .each("end", function () {
+            d3.select(this).on("mouseover", boundMof);
+        });
         // Revert view of root data
         this.setTextForCenterInfo(undefined, undefined, this.startIndividualId, true);
     },
@@ -419,7 +424,6 @@ const getFamily = function (acJSONObj, familyId) {
             .attr("width", this.width)
             .attr("height", 50)
             .attr("id", "trail");
-
         trail.append("svg:text")
             .attr("id", "endlabel")
             .style("fill", "#000");
@@ -431,7 +435,7 @@ const getFamily = function (acJSONObj, familyId) {
         points.push(this.b.w + this.b.t + "," + (this.b.h / 2));
         points.push(this.b.w + "," + this.b.h);
         points.push("0," + this.b.h);
-        if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
+        if (i > 0) {
             points.push(this.b.t + "," + (this.b.h / 2));
         }
         return points.join(" ");
@@ -441,73 +445,57 @@ const getFamily = function (acJSONObj, familyId) {
         let g = d3.select("#trail")
             .selectAll("g")
             .data(nodeArray, d => that.getTextForBreadcrumb(d, undefined, undefined));
-
         // Add breadcrumb and label for entering nodes.
         let entering = g.enter().append("svg:g");
-
         let boundBcp = this.breadcrumbPoints.bind(this);
-
         entering.append("svg:polygon")
             .attr("points", boundBcp)
-            .style("fill", d => d.color);
-
+            .style("fill", (d) => d.color);
         let boundGtfb = this.getTextForBreadcrumb.bind(this);
-
         entering.append("svg:text")
             .attr("x", (this.b.w + this.b.t) / 2)
             .attr("y", this.b.h / 2)
             .attr("dy", "0.35em")
             .attr("text-anchor", "middle")
             .text(d => boundGtfb(d, undefined, undefined));
-
         // Set position for entering and updating nodes.
         g.attr("transform", (d, i) => "translate(" + i * (that.b.w + that.b.s) + ", 0)");
-
         // Remove exiting nodes.
         g.exit().remove();
-
         // Make the breadcrumb trail visible, if it's hidden.
         d3.select("#trail").style("visibility", "");
     },
-
     buildHierarchyArray: function buildHierarchyArray(startIndividualId) {
-        let indiv = ACJ.Helper.getIndividual(this.acJSONObj, startIndividualId);
-        let indivNode = {"data": {}, "children": [], "size": 1000, "color": "#cccccc"};
+        let indiv = getIndividual(this.acJSONObj, startIndividualId);
+        let indivNode = { "data": {}, "children": [], "size": 1000, "color": "#cccccc" };
         indivNode.data = indiv;
-
         this.getChildNodes(indiv, indivNode, indivNode.size / 2, true, "");
-
         this.hierarchyArray = indivNode;
     },
     getChildNodes: function getChildNodes(indiv, indivNode, size, first, parentColor) {
-        let famId = ACJ.Helper.getFamilyId(this.acJSONObj, indiv.id);
-        if(famId === undefined) {
+        let famId = getFamilyId(this.acJSONObj, indiv.id, '');
+        if (famId === undefined) {
             return undefined;
         }
-
-        let fam = ACJ.Helper.getFamily(this.acJSONObj, famId);
-        if(fam !== undefined) {
-            let mother = ACJ.Helper.getIndividual(this.acJSONObj, fam.wifeId);
-            let father = ACJ.Helper.getIndividual(this.acJSONObj, fam.husbandId);
-
-            if(mother !== undefined) {
+        let fam = getFamily(this.acJSONObj, famId);
+        if (fam !== undefined) {
+            let mother = getIndividual(this.acJSONObj, fam.wifeId);
+            let father = getIndividual(this.acJSONObj, fam.husbandId);
+            if (mother !== undefined) {
                 let color = first ? "#490000" : (c => rgbToHex(hexToR(c), hexToG(c) + 30, hexToB(c)))(parentColor);
-                let newNode = {"data": {}, "children": [], "size": size, "color": color}
-
+                let newNode = { "data": {}, "children": [], "size": size, "color": color };
                 newNode.data = mother;
                 this.getChildNodes(mother, newNode, size / 2, false, color);
                 indivNode.children.push(newNode);
             }
-            if(father !== undefined) {
+            if (father !== undefined) {
                 let color = first ? "#004900" : (c => rgbToHex(hexToR(c), hexToG(c), hexToB(c) + 30))(parentColor);
-                let newNode = {"data": {}, "children": [], "size": size, "color": color}
-
+                let newNode = { "data": {}, "children": [], "size": size, "color": color };
                 newNode.data = father;
                 this.getChildNodes(father, newNode, size / 2, false, color);
                 indivNode.children.push(newNode);
             }
         }
-
         return indivNode;
     },
     getAncestors: function getAncestors(node) {
@@ -517,130 +505,112 @@ const getFamily = function (acJSONObj, familyId) {
             path.unshift(current);
             current = current.parent;
         }
-
         // And once again, because root should be always the first breadcrumb node
         path.unshift(current);
-
         return path;
     },
     setTextForCenterInfo: function setTextForCenterInfo(d3d, indiv, indivId, createChildLinks) {
-        let individual = undefined;
-
+        let individual = {};
         // Individual ermitteln
-        if(d3d !== undefined) {
+        if (d3d !== undefined) {
             individual = d3d.data;
         }
-        else if(indiv !== undefined) {
+        else if (indiv !== undefined) {
             individual = indiv;
         }
-        else if(indivId !== undefined) {
-            for(let indi of this.acJSONObj.individuals) {
-                if(indi.id === indivId) {
+        else if (indivId !== undefined) {
+            for (let indi of this.acJSONObj.individuals) {
+                if (indi.id === indivId) {
                     individual = indi;
                     break;
                 }
             }
         }
-
-        if(individual === undefined) {
-            return 'Person konnte nicht ermittelt werden!'
+        if (individual === undefined) {
+            return 'Person konnte nicht ermittelt werden!';
         }
-
         document.getElementById("name").innerHTML = individual.preNames + ' ' + individual.lastNames_Birth;
-
         // Events dieser Person ermitteln
         let individualEvents = [];
-
         this.acJSONObj.events.forEach(event => {
-            if(event.individualId === individual.id) {
+            if (event.individualId === individual.id) {
                 individualEvents.push(event);
             }
         });
-
         // Daten schreiben wenn vorhanden
-        let birth = '', death = '';
+        let birth;
+        let death;
         individualEvents.forEach(event => {
-            if(event.eventTypeId === 1) birth = event.date;
-            else if(event.eventTypeId === 5)	death = event.date;
+            if (event.eventTypeId === 1)
+                birth = event.date;
+            else if (event.eventTypeId === 5)
+                death = event.date;
         });
-
         document.getElementById("dates").innerHTML = (birth ? birth.substring(birth.length - 4) : '') + ' - ' + (death ? death.substring(death.length - 4) : '');
-
         // Links zu Kindern setzen
         this.removeChildLinks();
-        if(createChildLinks) {
+        if (createChildLinks) {
             this.findAndSetChildLinks(individual.id);
         }
     },
     getTextForBreadcrumb: function getTextForBreadcrumb(d3d, indiv, indivId) {
         let individual = undefined;
-
-        if(d3d !== undefined) {
+        if (d3d !== undefined) {
             individual = d3d.data;
         }
-        else if(indiv !== undefined) {
+        else if (indiv !== undefined) {
             individual = indiv;
         }
-        else if(indivId !== undefined) {
-            for(let indi of this.acJSONObj.individuals) {
-                if(indi.id === indivId) {
+        else if (indivId !== undefined) {
+            for (let indi of this.acJSONObj.individuals) {
+                if (indi.id === indivId) {
                     individual = indi;
                     break;
                 }
             }
         }
-
-        if(individual === undefined) {
-            return 'XXX'
+        if (individual === undefined) {
+            return 'XXX';
         }
-
-        if(countOfCharInStr(individual.preNames, ' ') >= 1) {
+        if (countOfCharInStr(individual.preNames, ' ') >= 1) {
             return individual.preNames.substring(0, individual.preNames.indexOf(' ') + 2) + '. ' + individual.lastNames_Birth;
         }
-
         return individual.preNames + ' ' + individual.lastNames_Birth;
     },
     removeChildLinks: function removeChildLinks() {
         let cont = document.getElementById('explanation');
         let links = document.getElementsByClassName('uplink');
-
-        while(links[0]) {
-           links[0].parentNode.removeChild(links[0]);
+        while (links[0]) {
+            links[0].parentNode.removeChild(links[0]);
         }
     },
     findAndSetChildLinks: function findAndSetChildLinks(parentId) {
-        let family = undefined;
-        for(let fam of this.acJSONObj.families) {
-            if(fam.husbandId === parentId || fam.wifeId === parentId) {
+        let family = {};
+        for (let fam of this.acJSONObj.families) {
+            if (fam.husbandId === parentId || fam.wifeId === parentId) {
                 family = fam;
                 break;
             }
         }
-
-        if(family === undefined) {
+        if (family === undefined) {
             return;
         }
-
         let children = [];
         this.acJSONObj.children.forEach(child => {
-            if(child.familyId === family.id) {
+            if (child.familyId === family.id) {
                 children.push(child);
             }
         });
-
-        if(children.length > 0) {
+        if (children.length > 0) {
             let cont = document.getElementById('explanation');
-
             let boundScar = this.setChildAsRoot.bind(this);
-
-            for(let child of children) {
+            for (let child of children) {
                 let a = document.createElement('a');
                 a.id = child.individualId;
                 a.href = '#';
                 a.innerHTML = 'Gehe zu ' + this.getTextForBreadcrumb(undefined, undefined, child.individualId);
                 a.className = 'uplink';
                 a.addEventListener('click', boundScar, false);
-
                 cont.appendChild(a);
             }
         }
@@ -650,32 +620,18 @@ const getFamily = function (acJSONObj, familyId) {
         refreshVis();
     },
 };
-ACJ.Vis.SunburstDefault = {
-    acJSONObj: {},
-    hierarchyArray: {},
-    startIndividualId: 'I1',
-    width: document.body.clientWidth,
-    height: document.body.clientHeight - 60,
-    radius: Math.min(document.body.clientWidth, document.body.clientHeight - 60) / 2.0,
-    b: { w: 150, h: 30, s: 3, t: 10 },
-    totalSize: 0,
-    vis: undefined,
-}
-ACJ.Vis.SunburstFactory = function SunburstFactory(options) {
-    let newObj = Object.assign(Object.create(ACJ.Vis.SunburstProto), ACJ.Vis.SunburstDefault, options);
-
+const SunburstFactory = function SunburstFactory(options) {
+    let newObj = Object.assign(Object.create(SunburstProto), options);
     newObj.partition = d3.layout.partition()
         .size([2 * Math.PI, newObj.radius * newObj.radius])
-        .value(function(d) { return d.size; });
-
+        .value(function (d) { return d.size; });
     newObj.arc = d3.svg.arc()
-        .startAngle(function(d) { return d.x; })
-        .endAngle(function(d) { return d.x + d.dx; })
-        .innerRadius(function(d) { return Math.sqrt(d.y); })
-        .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
-
-   return newObj;
-}*/
+        .startAngle(function (d) { return d.x; })
+        .endAngle(function (d) { return d.x + d.dx; })
+        .innerRadius(function (d) { return Math.sqrt(d.y); })
+        .outerRadius(function (d) { return Math.sqrt(d.y + d.dy); });
+    return newObj;
+};
 // String helper functions ///////////////////////////////////////////////////////////////////////////
 const pad = function pad(value, length) {
     return (value.toString().length < length) ? pad("0" + value, length) : value;
