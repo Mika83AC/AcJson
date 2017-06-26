@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		//"outDir": "./build",
+		"allowJs": true,
+		"module": "commonjs",
+		"strict": true,
+		"target": "es2017"
+	},
+	"exclude": [
+		"./node_modules",
+		"./**/*.js"
+	]
+}

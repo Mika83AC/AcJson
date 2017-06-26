@@ -1,0 +1,28 @@
+{
+  "name": "acjson",
+  "version": "1.0.0",
+  "description": "A more convenient format for storing your ancestors data.",
+  "main": "AcJSON.converter.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mika83AC/AcJson.git"
+  },
+  "keywords": [
+    "gedcom",
+    "acjson",
+    "ancestors"
+  ],
+  "author": "Michael Hilgers",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mika83AC/AcJson/issues"
+  },
+  "homepage": "https://github.com/Mika83AC/AcJson#readme",
+  "dependencies": {
+    "@types/d3": "^4.9.0",
+    "typescript": "^2.3.4"
+  }
+}
